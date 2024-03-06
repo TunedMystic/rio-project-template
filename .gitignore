@@ -14,6 +14,9 @@
 !*.go
 !go.sum
 !go.mod
+!static/*/**
+!templates/*
+!tailwind.*
 
 !README.md
 !LICENSE

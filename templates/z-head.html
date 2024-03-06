@@ -1,0 +1,49 @@
+{{define "head"}}
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.webp">
+
+    {{if Debug}}
+        <script src="https://cdn.tailwindcss.com"></script>
+    {{else}}
+        <link rel="stylesheet" href="/static/css/styles.css">
+    {{end}}
+
+    {{if .NotFound}}
+        <title>Page Not Found - {{SiteName}}</title>
+        <meta name="robots" content="noindex, follow">
+        <meta property="og:site_name" content="{{SiteName}}"/>
+        <meta property="og:locale" content="en_US"/>
+        <meta property="og:title" content="Page Not Found - {{SiteName}}"/>
+        <meta name="title" content="Page Not Found - {{SiteName}}"/>
+    {{else}}
+        <title>{{.MetaTitle}}</title>
+        <meta name="robots" content="index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large">
+        <link rel="canonical" href="{{.PageUrl}}">
+        <meta name="title" content="{{.MetaTitle}}"/>
+        <meta name="description" content="{{.MetaDescription}}"/>
+
+        <!-- The required open graph tags -->
+        <meta property="og:site_name" content="{{SiteName}}"/>
+        <meta property="og:type" content="website"/>
+        <meta property="og:title" content="{{.MetaTitle}}"/>
+        <meta property="og:description" content="{{.MetaDescription}}"/>
+        <meta property="og:url" content="{{.PageUrl}}"/>
+        <meta property="og:locale" content="en_US"/>
+        <meta property="og:image" content="{{SiteUrl}}{{SiteImageUrl}}"/>
+        <meta property="og:image:alt" content="{{SiteImageAlt}}"/>
+        <meta property="og:image:height" content="{{SiteImageHeight}}"/>
+        <meta property="og:image:secure_url" content="{{SiteUrl}}{{SiteImageUrl}}"/>
+        <meta property="og:image:type" content="image/{{SiteImageType}}"/>
+        <meta property="og:image:width" content="{{SiteImageWidth}}"/>
+
+        <!-- The open graph tags for twitter -->
+        <meta property="twitter:title" content="{{.MetaTitle}}"/>
+        <meta property="twitter:description" content="{{.MetaDescription}}"/>
+        <meta property="twitter:image" content="{{SiteUrl}}{{SiteImageUrl}}"/>
+        <meta property="twitter:card" content="summary_large_image"/>
+    {{end}}
+</head>
+{{end}}
