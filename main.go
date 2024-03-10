@@ -7,14 +7,13 @@ import (
 )
 
 func main() {
-	rio.Templates(Templates, rio.WithFuncMap(Funcs))
-
 	s := rio.NewServer()
 
 	s.Handle("/", NotFound(rio.MakeHandler(HandleIndex)))
+	s.Handle("/static/", CachePolicy(rio.FileServer(Static)))
 	s.Handle("/version.json", rio.MakeHandler(HandleVersion()))
-	s.Handle("/static/", rio.FileServer(Static))
 
+	rio.Templates(Templates, rio.WithFuncMap(Funcs))
 	s.Serve(Addr)
 }
 

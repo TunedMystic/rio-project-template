@@ -75,7 +75,7 @@ var (
 // ------------------------------------------------------------------
 
 var (
-	Debug     = BuildEnv != "production"
+	Debug     = BuildEnv == "debug"
 	Addr      = ":3000"
 	LocalHost = fmt.Sprintf("localhost%s", Addr)
 )
