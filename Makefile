@@ -8,7 +8,7 @@ APP="$$(basename -- $$(PWD))"
 ## @(app) - Run the Go app  --watch     ⭐️
 run: bin/watchexec bin/cwebp
 	@echo "✨📦✨ Running the app server\n"
-	@./bin/watchexec -r -e go,css,js,html,md,json "go run ./..."
+	@./bin/watchexec -r -e go,css,js,html,md,json DEBUG=true "go run ./..."
 
 
 ## @(app) - Run tailwindcss --watch     ⭐️
@@ -19,7 +19,7 @@ css: bin/tailwind
 ## @(app) - Build the app binary
 build: clean bin/cwebp
 	@echo "✨📦✨ Building the app binary\n"
-	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)'" -o bin/app ./...
+	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)' -X 'main.BuildDebug=false'" -o bin/app ./...
 
 
 ## @(app) - Remove temp files and dirs
