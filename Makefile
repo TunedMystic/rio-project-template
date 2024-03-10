@@ -1,34 +1,78 @@
 APP="$$(basename -- $$(PWD))"
 
 
+
 # -------------------------------------------------------------------
 # App-related commands
 # -------------------------------------------------------------------
 
-## @(app) - Run the Go app  --watch     ⭐️
+## @(app) - 🤖 Run the Go app       (dev)
 run: bin/watchexec bin/cwebp
-	@echo "✨📦✨ Running the app server\n"
-	@./bin/watchexec -r -e go,css,js,html,md,json DEBUG=true "go run ./..."
+	@echo "✨🤖✨ Running the app server\n"
+	@./bin/watchexec -r -e go,css,js,html,md,json "go run -ldflags=\"-X 'main.BuildEnv=debug'\" ./..."
 
 
-## @(app) - Run tailwindcss --watch     ⭐️
-css: bin/tailwind
-	$(MAKE) tailwind args=--watch
-
-
-## @(app) - Build the app binary
-build: clean bin/cwebp
+## @(app) - 📦 Build the app binary
+build: clean tailwind
 	@echo "✨📦✨ Building the app binary\n"
-	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)' -X 'main.BuildDebug=false'" -o bin/app ./...
+	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)'" -o bin/app ./...
 
 
-## @(app) - Remove temp files and dirs
+## @(app) - 🚀 Deploy the app with Fly.io
+deploy: clean tailwind
+	@echo "\n"
+	@echo "✨🚀✨ Deploying application\n"
+	@fly deploy --no-cache --build-arg BUILD_HASH="$$(git rev-parse --short=10 HEAD)"
+
+
+## @(app) - ✨ Remove temp files and dirs
 clean:
+	@echo "✨✨ Cleaning temp files\n"
 	@rm -f coverage.out
 	@go clean -testcache
 	@find . -name '.DS_Store' -type f -delete
 	@bash -c "mkdir -p bin && cd bin && find . ! -name 'watchexec' ! -name 'cwebp' ! -name 'tailwind' -type f -exec rm -f {} +"
 
+
+
+# -------------------------------------------------------------------
+# Docker-related commands
+# -------------------------------------------------------------------
+
+## @(docker) - 🤖 Run the Docker image
+run-docker: build-docker
+	@echo "✨🤖✨ Running the docker image\n"
+	docker run --rm --publish "3000:3000" --name ${APP} ${APP}
+
+
+## @(docker) - 📦 Build the docker image
+build-docker: clean tailwind
+	@echo "✨📦✨ Building the docker image\n"
+	@docker build --build-arg BUILD_HASH="$$(git rev-parse --short=10 HEAD)" -t ${APP} .
+
+
+## @(docker) - 📦 Build the docker image, no-cache
+build-docker-n: clean tailwind
+	@echo "✨📦✨ Building the docker image\n"
+	@docker build --no-cache --build-arg BUILD_HASH="$$(git rev-parse --short=10 HEAD)" -t ${APP} .
+
+
+## @(docker) - 🔥 Destroy all containers
+wipe:
+	@echo "✨🔥✨ Destroying related containers"
+	@docker container rm -fv $$(docker container ls -aq) 2> /dev/null || true
+
+
+## @(docker) - 💥 Destroy all containers, images and volumes
+wipeall: wipe
+	@echo "✨💥✨ Destroying related images"
+	@docker image rm -f $$(docker image ls -q "*/*/${APP}*") $$(docker image ls -q --filter dangling=true) 2> /dev/null || true
+
+
+
+# -------------------------------------------------------------------
+# Helper commands
+# -------------------------------------------------------------------
 
 tailwind: bin/tailwind
 	@echo "✨📦✨ Running tailwind\n"

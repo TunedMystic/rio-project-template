@@ -1,0 +1,13 @@
+# Binaries
+bin
+
+# Files
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store
+
+# Directories
+.vscode
+.notes
+.misc
+.tmp
