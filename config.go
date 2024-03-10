@@ -40,6 +40,20 @@ var Funcs template.FuncMap
 // ------------------------------------------------------------------
 //
 //
+// System Settings
+//
+//
+// ------------------------------------------------------------------
+
+var (
+	Debug     = BuildEnv == "debug"
+	Addr      = ":3000"
+	LocalHost = fmt.Sprintf("localhost%s", Addr)
+)
+
+// ------------------------------------------------------------------
+//
+//
 // Embed Filesystems
 //
 //
@@ -64,20 +78,6 @@ var (
 	BuildDate = "build-date"
 	BuildHash = "build-hash"
 	BuildEnv  = "production"
-)
-
-// ------------------------------------------------------------------
-//
-//
-// System Settings
-//
-//
-// ------------------------------------------------------------------
-
-var (
-	Debug     = BuildEnv == "debug"
-	Addr      = ":3000"
-	LocalHost = fmt.Sprintf("localhost%s", Addr)
 )
 
 // ------------------------------------------------------------------
