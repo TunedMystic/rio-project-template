@@ -5,6 +5,14 @@ import (
 	"net/http"
 )
 
+// ------------------------------------------------------------------
+//
+//
+// Type: RenderData
+//
+//
+// ------------------------------------------------------------------
+
 // RenderData stores the necessary data for template rendering.
 type RenderData struct {
 	// The Url of the current page.
