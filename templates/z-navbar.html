@@ -1,19 +1,27 @@
 {{define "navbar"}}
 <header class="w-full">
 
-    <div class="w-full mx-auto max-w-3xl px-4">
-        <div class="flex justify-between items-center py-4">
+    <div class="w-full mx-auto max-w-3xl px-4 bg-sky-900 rounded-none md:rounded">
+        <div class="flex flex-col justify-center items-start py-3 space-y-3">
             <!-- Site Name -->
-            <h3 class="text-slate-900 font-bold text-2xl">
-                <a href="/">{{SiteName}}</a>
-            </h3>
+
+                <h3 class="text-sky-50 font-medium text-3xl">
+                    <a href="/">{{SiteName}}</a>
+                </h3>
+
+
+            <!-- Tagline -->
+
+            <p class="flex flex-wrap justify-start items-center text-sky-200">{{SiteTagline}}</p>
         </div>
+
     </div>
 
 
     {{if NavbarLinks}}
-    <div class="w-full mx-auto max-w-3xl px-4">
-        <nav class="flex flex-wrap justify-center items-center space-x-9 bg-sky-800 rounded py-1.5 text-lg">
+    <div class="hidden w-full mx-auto max-w-3xl">
+        <p class="flex flex-wrap justify-start items-center bg-sky-800 rounded-b px-4 py-1 pb-2 text-sky-50">{{SiteTagline}}</p>
+        <nav class="hidden flex flex-wrap justify-center items-center space-x-9 bg-sky-800 rounded-b py-1.5 text-lg">
             {{range NavbarLinks}}
                 <a class="font-medium text-sky-50 py-0.5" href="{{.Href}}">{{.Text}}</a>
             {{end}}

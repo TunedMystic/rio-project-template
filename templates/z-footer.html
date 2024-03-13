@@ -20,23 +20,28 @@
 </footer>
 
 
-<footer class="w-full mx-auto max-w-3xl px-4">
-    <div class="bg-sky-800 border-t border-slate-200 rounded-t py-1.5">
-        <div class="flex flex-col justify-center items-center space-y-2 text-sky-50 text-lg">
+<footer class="w-full mx-auto max-w-3xl px-4 bg-sky-900 rounded-none md:rounded">
+    <div class="flex flex-col justify-center items-start py-3 space-y-3">
 
-            {{if FooterLinks}}
-                <nav class="flex flex-wrap justify-center pb-1">
-                    {{range FooterLinks}}
-                        <p class="px-2"><a class="px-2 hover:underline" href="{{.Href}}">{{.Text}}</a></p>
-                    {{end}}
-                </nav>
-            {{end}}
+        {{if FooterLinks}}
+            <nav class="flex flex-wrap justify-center space-x-7">
+                {{range FooterLinks}}
+                    <p class="">
+                        <a class="text-lg text-sky-50 hover:underline" href="{{.Href}}">{{.Text}}</a>
+                    </p>
+                {{end}}
+            </nav>
+        {{end}}
+
+        <div class="flex">
+            <p class="text-base text-sky-200">Copyright &copy; {{SiteHost}}</p>
         </div>
+
     </div>
 </footer>
 
 
-<div class="w-full mx-auto max-w-3xl px-4">
+<div class="hidden w-full mx-auto max-w-3xl px-4">
     <div class="bg-sky-900 rounded-b py-1.5">
         <div class="flex justify-center items-center">
             <p class="text-sky-50">Copyright &copy; {{SiteHost}}</p>
