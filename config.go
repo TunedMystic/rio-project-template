@@ -55,8 +55,8 @@ var NavbarLinks = []SiteLink{
 	{Text: "Home", Href: "/"},
 	{Text: "About", Href: "/about"},
 	{Text: "Privacy", Href: "/privacy-policy"},
-	{Text: "Sitemap", Href: "/sitemap"},
-	{Text: "Robots", Href: "/robots"},
+	// {Text: "Sitemap", Href: "/sitemap"},
+	// {Text: "Robots", Href: "/robots"},
 }
 
 var FooterLinks = []SiteLink{

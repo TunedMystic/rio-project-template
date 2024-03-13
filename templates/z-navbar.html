@@ -1,33 +1,27 @@
 {{define "navbar"}}
 <header class="w-full">
 
-    <div class="w-full bg-black">
-        <div class="mx-auto sm:max-w-3xl px-4 py-4 flex flex justify-between items-center">
+    <div class="w-full mx-auto max-w-3xl px-4">
+        <div class="flex justify-between items-center py-4">
             <!-- Site Name -->
-            <h3 class="text-slate-50 font-medium text-2xl">
+            <h3 class="text-slate-900 font-bold text-2xl">
                 <a href="/">{{SiteName}}</a>
             </h3>
-
-            <!-- Call to Action -->
-            <div class="flex justify-end">
-                <a class="rounded-md px-3 py-2 text-indigo-50 bg-indigo-600 hover:bg-indigo-700 font-medium" href="/">Try Now</a>
-            </div>
         </div>
     </div>
 
+
     {{if NavbarLinks}}
-    <div class="w-full bg-indigo-50 border-y border-indigo-100">
-        <div class="mx-auto sm:max-w-3xl px-4 py-2">
-            <nav class="flex flex-wrap justify-center items-center space-x-9">
-                {{range NavbarLinks}}
-                    <a class="font-medium text-indigo-600 hover:text-indigo-800 py-1" href="{{.Href}}">{{.Text}}</a>
-                {{end}}
-            </nav>
-        </div>
+    <div class="w-full mx-auto max-w-3xl px-4">
+        <nav class="flex flex-wrap justify-center items-center space-x-9 bg-sky-800 rounded py-1.5 text-lg">
+            {{range NavbarLinks}}
+                <a class="font-medium text-sky-50 py-0.5" href="{{.Href}}">{{.Text}}</a>
+            {{end}}
+        </nav>
     </div>
     {{end}}
 
 </header>
 
-<div class="mb-8"></div>
+<div class="mb-4"></div>
 {{end}}

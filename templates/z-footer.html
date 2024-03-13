@@ -1,9 +1,10 @@
 {{define "footer"}}
 <div class="mt-24"></div>
 
-<footer class="w-full xbg-slate-50 xborder-t bg-black">
-    <div class="mx-auto sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-5 py-8">
-        <div class="flex flex-col justify-center items-center space-y-6 text-neutral-100">
+
+<footer class="hidden w-full bg-slate-50 border-t border-slate-200">
+    <div class="mx-auto max-w-3xl px-4 py-7">
+        <div class="flex flex-col justify-center items-center space-y-4 text-neutral-700 text-lg">
 
             {{if FooterLinks}}
                 <nav class="flex flex-wrap justify-center pb-1">
@@ -13,8 +14,33 @@
                 </nav>
             {{end}}
 
-            <p class="text-neutral-400">Copyright &copy; {{SiteHost}}</p>
+            <p class="text-neutral-500">Copyright &copy; {{SiteHost}}</p>
         </div>
     </div>
 </footer>
+
+
+<footer class="w-full mx-auto max-w-3xl px-4">
+    <div class="bg-sky-800 border-t border-slate-200 rounded-t py-1.5">
+        <div class="flex flex-col justify-center items-center space-y-2 text-sky-50 text-lg">
+
+            {{if FooterLinks}}
+                <nav class="flex flex-wrap justify-center pb-1">
+                    {{range FooterLinks}}
+                        <p class="px-2"><a class="px-2 hover:underline" href="{{.Href}}">{{.Text}}</a></p>
+                    {{end}}
+                </nav>
+            {{end}}
+        </div>
+    </div>
+</footer>
+
+
+<div class="w-full mx-auto max-w-3xl px-4">
+    <div class="bg-sky-900 rounded-b py-1.5">
+        <div class="flex justify-center items-center">
+            <p class="text-sky-50">Copyright &copy; {{SiteHost}}</p>
+        </div>
+    </div>
+</div>
 {{end}}
