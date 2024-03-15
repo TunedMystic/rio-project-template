@@ -1,0 +1,15 @@
+{{define "breadcrumbs"}}
+<div class="flex">
+    {{$breadcrumbs := .Breadcrumbs}}
+    {{range $i, $e := $breadcrumbs}}
+        {{if $i}}&nbsp;&nbsp;&rsaquo;&nbsp;&nbsp;{{end}}
+
+        {{if len $breadcrumbs | sub 1 | eq $i}}
+            <!-- <span>{{$e.Text}}</span> -->
+            <a class="hover:underline" href="{{$e.Href}}">{{$e.Text}}</a>
+        {{else}}
+            <a class="hover:underline" href="{{$e.Href}}">{{$e.Text}}</a>
+        {{end}}
+    {{end}}
+</div>
+{{end}}

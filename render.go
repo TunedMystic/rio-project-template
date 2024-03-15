@@ -29,6 +29,9 @@ type RenderData struct {
 
 	// The page heading, h1
 	Heading string
+
+	// The trail of links to the current page
+	Breadcrumbs []SiteLink
 }
 
 func NewRenderData(r *http.Request) RenderData {

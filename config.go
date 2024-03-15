@@ -141,5 +141,11 @@ func init() {
 		"FooterLinks": func() []SiteLink {
 			return FooterLinks
 		},
+		"eq": func(x, y interface{}) bool {
+			return x == y
+		},
+		"sub": func(y, x int) int {
+			return x - y
+		},
 	}
 }
