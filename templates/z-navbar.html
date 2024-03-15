@@ -1,35 +1,31 @@
 {{define "navbar"}}
-<header class="w-full">
+<header class="w-full bg-sky-700 text-slate-50">
+    <div class="w-full mx-auto max-w-3xl px-2 py-3">
+        <div class="flex flex-wrap justify-between items-center">
 
-    <div class="w-full mx-auto max-w-3xl px-4 bg-sky-900 rounded-none md:rounded">
-        <div class="flex flex-col justify-center items-start py-3 space-y-3">
             <!-- Site Name -->
+            <h3 class="text-2xl text-current font-bold px-2">
+                <a href="/">{{SiteName}}</a>
+            </h3>
 
-                <h3 class="text-sky-50 font-medium text-3xl">
-                    <a href="/">{{SiteName}}</a>
-                </h3>
 
-
+            {{/*
             <!-- Tagline -->
+            <p class="hidden flex flex-wrap justify-start items-center text-slate-800">{{SiteTagline}}</p>
 
-            <p class="flex flex-wrap justify-start items-center text-sky-200">{{SiteTagline}}</p>
-        </div>
-
-    </div>
-
-
-    {{if NavbarLinks}}
-    <div class="hidden w-full mx-auto max-w-3xl">
-        <p class="flex flex-wrap justify-start items-center bg-sky-800 rounded-b px-4 py-1 pb-2 text-sky-50">{{SiteTagline}}</p>
-        <nav class="hidden flex flex-wrap justify-center items-center space-x-9 bg-sky-800 rounded-b py-1.5 text-lg">
-            {{range NavbarLinks}}
-                <a class="font-medium text-sky-50 py-0.5" href="{{.Href}}">{{.Text}}</a>
+            <!-- Navbar Links -->
+            {{if NavbarLinks}}
+                <nav class="hidden flex-wrap justify-center items-center space-x-9 text-lg px-2">
+                    {{range NavbarLinks}}
+                        <a class="font-medium text-slate-50 py-0.5" href="{{.Href}}">{{.Text}}</a>
+                    {{end}}
+                </nav>
             {{end}}
-        </nav>
-    </div>
-    {{end}}
+            */}}
 
+        </div>
+    </div>
 </header>
 
-<div class="mb-4"></div>
+<div class="mb-3"></div>
 {{end}}
