@@ -1,15 +1,21 @@
 {{define "breadcrumbs"}}
-<div class="flex">
-    {{$breadcrumbs := .Breadcrumbs}}
-    {{range $i, $e := $breadcrumbs}}
-        {{if $i}}&nbsp;&nbsp;&rsaquo;&nbsp;&nbsp;{{end}}
+{{if .Breadcrumbs}}
+    <div class="flex">
+        <!-- Render Breadcrumbs from the root -->
+        {{range $i, $e := .Breadcrumbs}}
+            {{if $i}}&nbsp;&nbsp;&rsaquo;&nbsp;&nbsp;{{end}}
 
-        {{if len $breadcrumbs | sub 1 | eq $i}}
-            <!-- <span>{{$e.Text}}</span> -->
-            <a class="hover:underline" href="{{$e.Href}}">{{$e.Text}}</a>
-        {{else}}
-            <a class="hover:underline" href="{{$e.Href}}">{{$e.Text}}</a>
+            {{if $e.Href}}
+                <a class="text-sky-800 hover:underline" href="{{$e.Href}}">{{$e.Text}}</a>
+            {{else}}
+                <span class="text-slate-800">{{$e.Text}}</span>
+            {{end}}
         {{end}}
-    {{end}}
-</div>
+
+        <!-- Render Breadcrumb for the current page -->
+        &nbsp;&nbsp;&rsaquo;&nbsp;&nbsp;<span class="text-slate-800">{{.Heading}}</span>
+    </div>
+
+    <div class="mb-5"></div>
+{{end}}
 {{end}}

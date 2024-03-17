@@ -45,5 +45,13 @@ func NewRenderData(r *http.Request) RenderData {
 		MetaTitle:       SiteTitle,
 		MetaDescription: SiteDescription,
 		Heading:         SiteTagline,
+		Breadcrumbs:     []SiteLink{LinkHome},
 	}
 }
+
+// func (rd RenderData) GetBreadcrumbs() []SiteLink {
+// 	if rd.Breadcrumbs == nil {
+// 		return []SiteLink{LinkHome, {Text: rd.Heading}}
+// 	}
+// 	return rd.Breadcrumbs
+// }

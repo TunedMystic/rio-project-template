@@ -51,19 +51,21 @@ type SiteLink struct {
 	Href string
 }
 
-var NavbarLinks = []SiteLink{
-	{Text: "Home", Href: "/"},
-	{Text: "About", Href: "/about"},
-	// {Text: "Privacy", Href: "/privacy-policy"},
-	// {Text: "Sitemap", Href: "/sitemap"},
-	// {Text: "Robots", Href: "/robots"},
-}
+// var NavbarLinks = []SiteLink{
+// 	{Text: "Home", Href: "/"},
+// 	{Text: "About", Href: "/about"},
+// 	// {Text: "Privacy", Href: "/privacy-policy"},
+// 	// {Text: "Sitemap", Href: "/sitemap"},
+// 	// {Text: "Robots", Href: "/robots"},
+// }
 
 var FooterLinks = []SiteLink{
 	{Text: "Home", Href: "/"},
 	{Text: "About", Href: "/about"},
 	{Text: "Privacy Policy", Href: "/privacy-policy"},
 }
+
+var LinkHome = SiteLink{Text: "Home", Href: "/"}
 
 // ------------------------------------------------------------------
 //
@@ -135,17 +137,8 @@ func init() {
 		"SiteImageAlt":    rio.WrapString(SiteImageAlt),
 		"SiteImageWidth":  rio.WrapInt(SiteImageWidth),
 		"SiteImageHeight": rio.WrapInt(SiteImageHeight),
-		"NavbarLinks": func() []SiteLink {
-			return NavbarLinks
-		},
 		"FooterLinks": func() []SiteLink {
 			return FooterLinks
-		},
-		"eq": func(x, y interface{}) bool {
-			return x == y
-		},
-		"sub": func(y, x int) int {
-			return x - y
 		},
 	}
 }
