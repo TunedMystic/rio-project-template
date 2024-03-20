@@ -8,6 +8,8 @@
     {{template "meta" .}}
     <body>
     {{template "header" .}}
+    <div class="mb-5"></div>
+    <main class="content w-full mx-auto max-w-3xl text-lg text-slate-800 px-4">
 {{end}}
 
 
@@ -16,34 +18,9 @@
 // --------------------------------------------------------
 
 {{define "endpage"}}
+    </main>
+    <div class="mt-12"></div>
     {{template "footer" .}}
     </body>
     </html>
-{{end}}
-
-
-// --------------------------------------------------------------------
-// The "content" template defines the beginning of the content section.
-// --------------------------------------------------------------------
-
-{{define "content"}}
-    <div class="content w-full mx-auto max-w-3xl text-lg text-slate-800 px-4">
-{{end}}
-
-
-// --------------------------------------------------------------------
-// The "endcontent" template defines the end of the content section.
-// --------------------------------------------------------------------
-
-{{define "endcontent"}}
-    </div>
-{{end}}
-
-
-// --------------------------------------------------------------------
-// The "heading" template defines the end of the content section.
-// --------------------------------------------------------------------
-
-{{define "heading"}}
-    <h1 class="font-bold text-3xl text-slate-800 leading-relaxed mb-5">{{.Heading}}</h1>
 {{end}}

@@ -1,12 +1,6 @@
-// --------------------------------------------------------
-// The "404" template defines the 404 Not Found error page.
-// --------------------------------------------------------
-
 {{define "404"}}
 {{template "page" .}}
-{{template "content" .}}
 
-<!-- Error Heading -->
 <div class="mx-auto flex flex-col items-center space-y-4 py-5">
     <h1 class="font-black text-center text-8xl text-pink-600">404</h1>
 
@@ -16,6 +10,5 @@
     </div>
 </div>
 
-{{template "endcontent" .}}
 {{template "endpage" .}}
 {{end}}

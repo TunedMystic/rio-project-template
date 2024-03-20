@@ -51,7 +51,7 @@ type SiteLink struct {
 	Href string
 }
 
-var NavbarLinks = []SiteLink{
+var HeaderLinks = []SiteLink{
 	{Text: "About", Href: "/about"},
 }
 
@@ -133,7 +133,7 @@ func init() {
 		"SiteImageAlt":    rio.WrapString(SiteImageAlt),
 		"SiteImageWidth":  rio.WrapInt(SiteImageWidth),
 		"SiteImageHeight": rio.WrapInt(SiteImageHeight),
-		"NavbarLinks":     wrapSiteLinks(NavbarLinks),
+		"HeaderLinks":     wrapSiteLinks(HeaderLinks),
 		"FooterLinks":     wrapSiteLinks(FooterLinks),
 	}
 }
