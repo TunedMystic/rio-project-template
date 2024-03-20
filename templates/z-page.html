@@ -5,9 +5,9 @@
 {{define "page"}}
     <!DOCTYPE html>
     <html lang="en">
-        {{template "head" .}}
-        <body>
-        {{template "navbar" .}}
+    {{template "meta" .}}
+    <body>
+    {{template "header" .}}
 {{end}}
 
 
@@ -16,7 +16,34 @@
 // --------------------------------------------------------
 
 {{define "endpage"}}
-        {{template "footer" .}}
-        </body>
+    {{template "footer" .}}
+    </body>
     </html>
+{{end}}
+
+
+// --------------------------------------------------------------------
+// The "content" template defines the beginning of the content section.
+// --------------------------------------------------------------------
+
+{{define "content"}}
+    <div class="content w-full mx-auto max-w-3xl text-lg text-slate-800 px-4">
+{{end}}
+
+
+// --------------------------------------------------------------------
+// The "endcontent" template defines the end of the content section.
+// --------------------------------------------------------------------
+
+{{define "endcontent"}}
+    </div>
+{{end}}
+
+
+// --------------------------------------------------------------------
+// The "heading" template defines the end of the content section.
+// --------------------------------------------------------------------
+
+{{define "heading"}}
+    <h1 class="font-bold text-3xl text-slate-800 leading-relaxed mb-5">{{.Heading}}</h1>
 {{end}}

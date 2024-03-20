@@ -1,0 +1,63 @@
+// --------------------------------------------------------
+// The "header" template defines the header section.
+// --------------------------------------------------------
+
+{{define "header"}}
+<header class="w-full bg-slate-50 border-b border-slate-200">
+
+    <!-- Colored Bar -->
+    <div class="w-full mx-auto bg-sky-700 pt-1.5"></div>
+
+    <div class="w-full mx-auto max-w-3xl px-2 py-5">
+        <div class="flex flex-wrap justify-between items-center">
+
+            <!-- Site Name -->
+            <h3 class="text-slate-800 text-xl font-bold px-2">
+                <a href="/">{{SiteName}}</a>
+            </h3>
+
+            <!-- Navbar Links -->
+            {{if NavbarLinks}}
+                <nav class="flex flex-wrap justify-center text-lg space-x-8 px-2">
+                    {{range NavbarLinks}}
+                        <a class="text-slate-600 hover:underline" href="{{.Href}}">{{.Text}}</a>
+                    {{end}}
+                </nav>
+            {{end}}
+        </div>
+    </div>
+</header>
+
+<div class="mb-5"></div>
+{{end}}
+
+
+// --------------------------------------------------------
+// The "footer" template defines the footer section.
+// --------------------------------------------------------
+
+{{define "footer"}}
+<div class="mt-12"></div>
+
+<footer class="w-full bg-slate-50 border-t border-slate-200 text-lg">
+    <div class="mx-auto max-w-3xl px-4 py-6">
+        <div class="flex flex-col md:flex-row justify-center md:justify-between items-center space-y-5 md:space-y-0">
+
+            <!-- Footer Links -->
+            {{if FooterLinks}}
+                <nav class="flex flex-wrap justify-center space-x-8">
+                    {{range FooterLinks}}
+                        <a class="text-slate-600 hover:underline" href="{{.Href}}">{{.Text}}</a>
+                    {{end}}
+                </nav>
+            {{end}}
+
+            <!-- Copyright -->
+            <p class="text-slate-400">Copyright &copy; {{SiteHost}}</p>
+        </div>
+    </div>
+
+    <!-- Colored Bar -->
+    <div class="w-full mx-auto bg-sky-700 pt-1.5"></div>
+</footer>
+{{end}}
