@@ -31,7 +31,7 @@ type RenderData struct {
 	Heading string
 
 	// The trail of links to the current page
-	Breadcrumbs []SiteLink
+	Breadcrumbs []Link
 }
 
 func NewRenderData(r *http.Request) RenderData {
@@ -45,6 +45,6 @@ func NewRenderData(r *http.Request) RenderData {
 		MetaTitle:       SiteTitle,
 		MetaDescription: SiteDescription,
 		Heading:         SiteTagline,
-		Breadcrumbs:     []SiteLink{LinkHome},
+		Breadcrumbs:     []Link{LinkHome},
 	}
 }
