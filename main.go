@@ -68,8 +68,3 @@ func HandlePrivacyPolicy(w http.ResponseWriter, r *http.Request) error {
 	rd.Heading = "Privacy Policy"
 	return rio.Render(w, "privacy-policy", http.StatusOK, rd)
 }
-
-/*
-hr: bg-sky-500
-link: text-sky-700
-*/
