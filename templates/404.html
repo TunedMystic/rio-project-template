@@ -1,21 +1,14 @@
-// --------------------------------------------------------
-// The "404" template defines the 404 Not Found error page.
-// --------------------------------------------------------
-
 {{define "404"}}
 {{template "page" .}}
-<div class="w-full mx-auto sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-5">
 
-    <!-- Error Heading -->
-    <div class="main-section mx-auto flex flex-col items-center space-y-4 py-5">
-        <h1 class="font-black text-center text-8xl text-pink-600">404</h1>
+<div class="mx-auto flex flex-col items-center space-y-4 py-5">
+    <h1 class="font-black text-center text-8xl text-pink-600">404</h1>
 
-        <h2 class="font-bold text-center text-2xl text-slate-700">Oops! We couldn't find the page you are looking for.</h2>
-        <div class="flex flex-col leading-relaxed  text-base text-slate-700">
-            <p>The page you are looking for either does not exist or has been moved. Please check the URL again to ensure that you are visiting the correct page. Alternatively, you can go back to the <a class="font-medium underline" href="{{SiteUrl}}">home page</a>.</p>
-        </div>
+    <h2 class="font-bold text-center text-2xl">Oops! We couldn't find the page you are looking for.</h2>
+    <div class="flex flex-col leading-relaxed">
+        <p>The page you are looking for either does not exist or has been moved. Please check the URL again to ensure that you are visiting the correct page. Alternatively, you can go back to the <a class="font-medium underline" href="{{SiteUrl}}">home page</a>.</p>
     </div>
-
 </div>
+
 {{template "endpage" .}}
 {{end}}

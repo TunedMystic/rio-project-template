@@ -1,8 +1,30 @@
 {{define "about"}}
 {{template "page" .}}
-<div class="w-full mx-auto sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-5">
+{{template "breadcrumbs" .}}
+{{template "heading" .}}
 
-    <h1 class="font-bold text-center text-2xl text-slate-800 leading-relaxed mt-2 mb-10">{{.Heading}}</h1>
+<div class="space-y-3">
+<p>Welcome to <strong>{{SiteName}}</strong> – The Golang project template, built with <a class="text-blue-600" href="https://github.com/tunedmystic/rio">Rio</a>! Created with simplicity and ease of use in mind, our template is perfect for developers looking to kickstart their Golang projects quickly and efficiently.</p>
+
+
+<h2 class="text-2xl font-bold pt-8 pb-3" id="types-of-data-collected">Key Features</h2>
+<ul class="list-disc space-y-3 pl-4">
+    <li><strong>Simplified Setup:</strong> Our template streamlines the setup process, making it a breeze to get your Golang project up and running.</li>
+    <li><strong>Easy to Use:</strong> With straightforward instructions and a clean project structure, you'll be writing code in no time.</li>
+    <li><strong>Customizable:</strong> Tailor the template to your specific needs, whether you're working on a small side project or a large-scale application.</li>
+</ul>
+
+
+<h2 class="text-2xl font-bold pt-8 pb-3" id="types-of-data-collected">Get Started Today</h2>
+<p>This template is designed to simplify your Golang development journey. Whether you're a seasoned developer or new to Golang, {{SiteName}} has your back.</p>
+
+
+<h2 class="text-2xl font-bold pt-8 pb-3" id="types-of-data-collected">Questions or Feedback?</h2>
+<p>We're here to assist you on your Golang project journey. Don't hesitate to reach out with any questions, feedback, or suggestions. Your success with our template is our priority.</p>
+
+<p>You can reach out to me at <strong>{{SiteEmail}}</strong>, and I'll get back to you as soon as I can.</p>
+
+<p>Start building amazing Golang projects effortlessly with {{SiteName}}!</p>
 
 </div>
 {{template "endpage" .}}

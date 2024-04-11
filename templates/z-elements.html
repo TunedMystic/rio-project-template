@@ -1,0 +1,86 @@
+// --------------------------------------------------------
+// The "header" template defines the header section.
+// --------------------------------------------------------
+
+{{define "header"}}
+<header class="w-full bg-gray-50 border-y border-gray-200">
+    <div class="w-full mx-auto max-w-3xl px-4 py-3.5">
+        <div class="flex flex-wrap justify-between items-center">
+
+            <!-- Site Name -->
+            <h3 class="text-gray-800 text-xl font-bold">
+                <a href="/">{{SiteName}}</a>
+            </h3>
+
+            <!-- Header Links -->
+            {{if HeaderLinks}}
+                <nav class="flex flex-wrap justify-center space-x-8">
+                    {{range HeaderLinks}}
+                        <a class="text-gray-600 hover:font-bold" href="{{.Href}}">{{.Text}}</a>
+                    {{end}}
+                </nav>
+            {{end}}
+        </div>
+    </div>
+</header>
+{{end}}
+
+
+
+// --------------------------------------------------------
+// The "footer" template defines the footer section.
+// --------------------------------------------------------
+
+{{define "footer"}}
+<footer class="w-full bg-gray-50 border-y border-gray-200">
+    <div class="mx-auto max-w-3xl px-4 py-3.5">
+        <div class="flex flex-col md:flex-row justify-center md:justify-between items-center space-y-5 md:space-y-0">
+
+            <!-- Footer Links -->
+            {{if FooterLinks}}
+                <nav class="flex flex-wrap justify-center space-x-8">
+                    {{range FooterLinks}}
+                        <a class="text-blue-600 hover:font-bold" href="{{.Href}}">{{.Text}}</a>
+                    {{end}}
+                </nav>
+            {{end}}
+
+            <!-- Copyright -->
+            <span>&copy; <a class="text-gray-400 hover:font-bold hover:text-gray-500" href="/">{{SiteHost}}</a></span>
+        </div>
+    </div>
+</footer>
+{{end}}
+
+
+
+// --------------------------------------------------------------------
+// The "breadcrumbs" template defines trail of links to the current page.
+// --------------------------------------------------------------------
+
+{{define "breadcrumbs"}}
+<div class="flex items-center">
+    <!-- Render Breadcrumbs from the root -->
+    {{range $i, $e := .Breadcrumbs}}
+        {{if $i}}<span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>{{end}}
+        <a class='text-blue-600 hover:font-bold' href="{{$e.Href}}">{{$e.Text}}</a>
+    {{end}}
+
+    <!-- Render Breadcrumb for the current page -->
+    <span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>
+    <span class="text-gray-600">{{.Heading}}</span>
+</div>
+
+<div class="mb-5"></div>
+{{end}}
+
+
+
+// --------------------------------------------------------------------
+// The "heading" template defines the page heading.
+// --------------------------------------------------------------------
+
+{{define "heading"}}
+    <h1 class="font-bold text-3xl text-gray-800 leading-relaxed">{{.Heading}}</h1>
+    <div class="mb-5"></div>
+{{end}}

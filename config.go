@@ -40,30 +40,28 @@ var Funcs template.FuncMap
 // ------------------------------------------------------------------
 //
 //
-// Type: SiteLink
+// Type: Link
 //
 //
 // ------------------------------------------------------------------
 
-// SiteLink stores data for an anchor link.
-type SiteLink struct {
+// Link stores data for an anchor link.
+type Link struct {
 	Text string
 	Href string
 }
 
-var NavbarLinks = []SiteLink{
-	{Text: "Home", Href: "/"},
+var HeaderLinks = []Link{
 	{Text: "About", Href: "/about"},
-	{Text: "Privacy", Href: "/privacy-policy"},
-	{Text: "Sitemap", Href: "/sitemap"},
-	{Text: "Robots", Href: "/robots"},
 }
 
-var FooterLinks = []SiteLink{
+var FooterLinks = []Link{
 	{Text: "Home", Href: "/"},
 	{Text: "About", Href: "/about"},
 	{Text: "Privacy Policy", Href: "/privacy-policy"},
 }
+
+var LinkHome = Link{Text: "Home", Href: "/"}
 
 // ------------------------------------------------------------------
 //
@@ -135,11 +133,13 @@ func init() {
 		"SiteImageAlt":    rio.WrapString(SiteImageAlt),
 		"SiteImageWidth":  rio.WrapInt(SiteImageWidth),
 		"SiteImageHeight": rio.WrapInt(SiteImageHeight),
-		"NavbarLinks": func() []SiteLink {
-			return NavbarLinks
-		},
-		"FooterLinks": func() []SiteLink {
-			return FooterLinks
-		},
+		"HeaderLinks":     wrapLinks(HeaderLinks),
+		"FooterLinks":     wrapLinks(FooterLinks),
+	}
+}
+
+func wrapLinks(val []Link) func() []Link {
+	return func() []Link {
+		return val
 	}
 }

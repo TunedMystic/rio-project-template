@@ -1,4 +1,8 @@
-{{define "head"}}
+// --------------------------------------------------------
+// The "meta" template defines the HTML <head> section.
+// --------------------------------------------------------
+
+{{define "meta"}}
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -6,7 +10,6 @@
     <link rel="icon" type="image/x-icon" href="/static/img/favicon.webp">
 
     {{if Debug}}
-        <!-- <meta http-equiv="refresh" content="1"> -->
         <script src="https://cdn.tailwindcss.com"></script>
     {{else}}
         <link rel="stylesheet" href="/static/css/styles.css">

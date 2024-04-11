@@ -5,9 +5,11 @@
 {{define "page"}}
     <!DOCTYPE html>
     <html lang="en">
-        {{template "head" .}}
-        <body>
-        {{template "navbar" .}}
+    {{template "meta" .}}
+    <body class="text-[17px] font-mono tracking-tight leading-relaxed text-gray-800">
+    {{template "header" .}}
+    <div class="mb-5"></div>
+    <main class="content w-full mx-auto max-w-3xl px-4">
 {{end}}
 
 
@@ -16,7 +18,9 @@
 // --------------------------------------------------------
 
 {{define "endpage"}}
-        {{template "footer" .}}
-        </body>
+    </main>
+    <div class="mt-12"></div>
+    {{template "footer" .}}
+    </body>
     </html>
 {{end}}
