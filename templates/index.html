@@ -2,12 +2,12 @@
 {{template "page" .}}
 
 <div class="space-y-3">
-<h1 class="font-bold text-3xl text-gray-800 leading-relaxed">Welcome to ✨<span class="text-cyan-600">{{SiteName}}</span>✨</h1>
+<h1 class="font-bold text-3xl text-gray-800 leading-relaxed">Welcome to ✨<span class="text-cyan-600">{{.Conf.SiteName}}</span>✨</h1>
 <p>The snappy Golang project template.</p>
 
 
-<h3 class="text-xl font-bold pt-6">Simplify Your Development Process</h3>
-<p>Simplify your Golang projects with {{SiteName}}, a quick and easy solution designed to streamline your development workflow. Forget the complexities and dive straight into building Golang applications.</p>
+<h2 class="text-xl font-bold pt-6">Simplify Your Development Process</h2>
+<p>Simplify your Golang projects with {{.Conf.SiteName}}, a quick and easy solution designed to streamline your development workflow. Forget the complexities and dive straight into building Golang applications.</p>
 </div>
 
 {{template "endpage" .}}

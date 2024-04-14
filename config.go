@@ -2,40 +2,113 @@ package main
 
 import (
 	"embed"
-	"fmt"
-	"html/template"
-
-	"github.com/tunedmystic/rio"
+	"net/http"
+	"strings"
 )
 
 // ------------------------------------------------------------------
 //
 //
-// App Settings
+// Type: Config
 //
 //
 // ------------------------------------------------------------------
 
-var (
-	SiteName        = "Rio Starter"
-	SiteHost        = "riostarter.example.com"
-	SiteTagline     = "The golang project template"
-	SiteDescription = "The golang project template, built with Rio! Get up and running quickly. Deploy when you're ready to ship!"
-	SiteImageUrl    = "/static/img/meta-img.webp"
-	SiteImageType   = "webp"
-	SiteImageWidth  = 800
-	SiteImageHeight = 450
-)
+// Config stores the necessary info about the application.
+type Config struct {
+	SiteName        string
+	SiteHost        string
+	SiteTagline     string
+	SiteDescription string
+	SiteTitle       string
+	SiteUrl         string
+	SiteEmail       string
+	Addr            string
+	Debug           bool
+	Image           Image
+	HomeLink        Link
+	HeaderLinks     []Link
+	FooterLinks     []Link
+}
 
-var (
-	SiteTitle    = fmt.Sprintf("%s - %s", SiteName, SiteTagline)
-	SiteUrl      = fmt.Sprintf("https://%s", SiteHost)
-	SiteEmail    = fmt.Sprintf("admin@%s", SiteHost)
-	SiteImageAlt = SiteTitle
-)
+var Conf = NewConfig()
 
-// Template map for HTML templates.
-var Funcs template.FuncMap
+func NewConfig() Config {
+	c := Config{}
+	c.SiteName = "Rio Starter"
+	c.SiteHost = "riostarter.example.com"
+	c.SiteTagline = "The golang project template"
+	c.SiteDescription = "The golang project template, built with Rio! Get up and running quickly. Deploy when you're ready to ship!"
+	c.SiteTitle = join(c.SiteName, " - ", c.SiteTagline)
+	c.SiteUrl = join("https://", c.SiteHost)
+	c.SiteEmail = join("admin@", c.SiteHost)
+	c.Addr = ":3000"
+	c.Debug = BuildEnv == "debug"
+
+	c.Image = Image{
+		Url:    "/static/img/meta-img.webp",
+		Type:   "webp",
+		Alt:    c.SiteTitle,
+		Width:  "800",
+		Height: "450",
+	}
+
+	c.HomeLink = Link{Text: "Home", Href: "/"}
+
+	c.HeaderLinks = []Link{
+		{Text: "About", Href: "/about"},
+	}
+
+	c.FooterLinks = []Link{
+		{Text: "Home", Href: "/"},
+		{Text: "About", Href: "/about"},
+		{Text: "Privacy Policy", Href: "/privacy-policy"},
+	}
+
+	if c.Debug {
+		c.SiteHost = join("localhost", c.Addr)
+		c.SiteUrl = join("http://localhost", c.Addr)
+		c.SiteEmail = join("admin@localhost", c.Addr)
+	}
+
+	return c
+}
+
+func (c Config) NewRenderData(r *http.Request) RenderData {
+	pageUrl := ""
+	if r != nil {
+		pageUrl = join(c.SiteUrl, r.URL.RequestURI())
+	}
+
+	return RenderData{
+		Conf:            c,
+		Image:           c.Image,
+		MetaTitle:       c.SiteTitle,
+		MetaDescription: c.SiteDescription,
+		Heading:         c.SiteTagline,
+		PageUrl:         pageUrl,
+	}
+}
+
+// ------------------------------------------------------------------
+//
+//
+// Type: RenderData
+//
+//
+// ------------------------------------------------------------------
+
+// RenderData represents data for template rendering.
+type RenderData struct {
+	MetaTitle       string
+	MetaDescription string
+	Heading         string
+	PageUrl         string
+	NotFound        bool
+	Conf            Config
+	Image           Image
+	Breadcrumbs     []Link
+}
 
 // ------------------------------------------------------------------
 //
@@ -45,37 +118,28 @@ var Funcs template.FuncMap
 //
 // ------------------------------------------------------------------
 
-// Link stores data for an anchor link.
+// Link represents an anchor link.
 type Link struct {
 	Text string
 	Href string
 }
 
-var HeaderLinks = []Link{
-	{Text: "About", Href: "/about"},
-}
-
-var FooterLinks = []Link{
-	{Text: "Home", Href: "/"},
-	{Text: "About", Href: "/about"},
-	{Text: "Privacy Policy", Href: "/privacy-policy"},
-}
-
-var LinkHome = Link{Text: "Home", Href: "/"}
-
 // ------------------------------------------------------------------
 //
 //
-// System Settings
+// Type: Image
 //
 //
 // ------------------------------------------------------------------
 
-var (
-	Debug     = BuildEnv == "debug"
-	Addr      = ":3000"
-	LocalHost = fmt.Sprintf("localhost%s", Addr)
-)
+// Image represents an image media object.
+type Image struct {
+	Url    string
+	Alt    string
+	Type   string
+	Width  string
+	Height string
+}
 
 // ------------------------------------------------------------------
 //
@@ -109,37 +173,11 @@ var (
 // ------------------------------------------------------------------
 //
 //
-// Init: Override settings and initialize template funcmap.
+// Helper functions
 //
 //
 // ------------------------------------------------------------------
 
-func init() {
-	if Debug {
-		SiteHost = LocalHost
-		SiteUrl = fmt.Sprintf("http://%s", LocalHost)
-		SiteEmail = fmt.Sprintf("admin@%s", LocalHost)
-	}
-
-	Funcs = template.FuncMap{
-		"Debug":           rio.WrapBool(Debug),
-		"SiteHost":        rio.WrapString(SiteHost),
-		"SiteUrl":         rio.WrapString(SiteUrl),
-		"SiteName":        rio.WrapString(SiteName),
-		"SiteTagline":     rio.WrapString(SiteTagline),
-		"SiteEmail":       rio.WrapString(SiteEmail),
-		"SiteImageUrl":    rio.WrapString(SiteImageUrl),
-		"SiteImageType":   rio.WrapString(SiteImageType),
-		"SiteImageAlt":    rio.WrapString(SiteImageAlt),
-		"SiteImageWidth":  rio.WrapInt(SiteImageWidth),
-		"SiteImageHeight": rio.WrapInt(SiteImageHeight),
-		"HeaderLinks":     wrapLinks(HeaderLinks),
-		"FooterLinks":     wrapLinks(FooterLinks),
-	}
-}
-
-func wrapLinks(val []Link) func() []Link {
-	return func() []Link {
-		return val
-	}
+func join(s ...string) string {
+	return strings.Join(s, "")
 }
