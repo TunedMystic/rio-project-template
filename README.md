@@ -1,9 +1,7 @@
 # Rio Project Template
 
-A Golang project template, with Rio
+A Golang project template, with [Rio](https://github.com/tunedmystic/rio).
 
+<br />
 
-
-```
-./bin/cwebp -q 85 static/img/someimg.png -o static/img/someimg.webp
-```
+<img width="1068" alt="rio-starter" src="https://github.com/TunedMystic/rio-project-template/assets/6523726/546a0c8c-8760-440b-84da-d18112d8ce9c">
