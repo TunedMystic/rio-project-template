@@ -9,13 +9,13 @@
 
             <!-- Site Name -->
             <h3 class="text-gray-800 text-xl font-bold">
-                <a href="/">{{SiteName}}</a>
+                <a href="/">{{.Conf.SiteName}}</a>
             </h3>
 
             <!-- Header Links -->
-            {{if HeaderLinks}}
+            {{if .Conf.HeaderLinks}}
                 <nav class="flex flex-wrap justify-center space-x-8">
-                    {{range HeaderLinks}}
+                    {{range .Conf.HeaderLinks}}
                         <a class="text-gray-600 hover:font-bold" href="{{.Href}}">{{.Text}}</a>
                     {{end}}
                 </nav>
@@ -37,16 +37,16 @@
         <div class="flex flex-col md:flex-row justify-center md:justify-between items-center space-y-5 md:space-y-0">
 
             <!-- Footer Links -->
-            {{if FooterLinks}}
+            {{if .Conf.FooterLinks}}
                 <nav class="flex flex-wrap justify-center space-x-8">
-                    {{range FooterLinks}}
+                    {{range .Conf.FooterLinks}}
                         <a class="text-blue-600 hover:font-bold" href="{{.Href}}">{{.Text}}</a>
                     {{end}}
                 </nav>
             {{end}}
 
             <!-- Copyright -->
-            <span>&copy; <a class="text-gray-400 hover:font-bold hover:text-gray-500" href="/">{{SiteHost}}</a></span>
+            <span>&copy; <a class="text-gray-600 hover:font-bold" href="/">{{.Conf.SiteHost}}</a></span>
         </div>
     </div>
 </footer>
@@ -59,19 +59,26 @@
 // --------------------------------------------------------------------
 
 {{define "breadcrumbs"}}
-<div class="flex items-center">
-    <!-- Render Breadcrumbs from the root -->
-    {{range $i, $e := .Breadcrumbs}}
-        {{if $i}}<span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>{{end}}
-        <a class='text-blue-600 hover:font-bold' href="{{$e.Href}}">{{$e.Text}}</a>
+    {{if .Breadcrumbs}}
+        <div class="flex items-center">
+            {{range $i, $e := .Breadcrumbs}}
+                {{if $i}}<span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>{{end}}
+                {{if $e.Href}}
+                    <a class='text-blue-600 hover:font-bold' href="{{$e.Href}}">{{$e.Text}}</a>
+                {{else}}
+                    <span class="text-gray-600">{{$e.Text}}</span>
+                {{end}}
+            {{end}}
+        </div>
+    {{else}}
+        <div class="flex items-center">
+            <a class='text-blue-600 hover:font-bold' href="/">Home</a>
+
+            <span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>
+            <span class="text-gray-600">{{.Heading}}</span>
+        </div>
     {{end}}
-
-    <!-- Render Breadcrumb for the current page -->
-    <span class="text-gray-600">&nbsp;&rsaquo;&nbsp;</span>
-    <span class="text-gray-600">{{.Heading}}</span>
-</div>
-
-<div class="mb-5"></div>
+    <div class="mb-5"></div>
 {{end}}
 
 

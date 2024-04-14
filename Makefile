@@ -66,7 +66,7 @@ wipe:
 ## @(docker) - 💥 Destroy all containers, images and volumes
 wipeall: wipe
 	@echo "✨💥✨ Destroying related images"
-	@docker image rm -f $$(docker image ls -q "*/*/${APP}*") $$(docker image ls -q --filter dangling=true) 2> /dev/null || true
+	@docker image rm -f $$(docker image ls -q "${APP}") $$(docker image ls -q --filter dangling=true) 2> /dev/null || true
 
 
 
