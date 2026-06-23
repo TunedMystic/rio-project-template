@@ -1,5 +1,5 @@
 module app
 
-go 1.22.1
+go 1.26.4
 
-require github.com/tunedmystic/rio v0.0.3
+require github.com/tunedmystic/rio v0.26.0
