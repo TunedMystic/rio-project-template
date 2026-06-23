@@ -2,34 +2,72 @@ package main
 
 import (
 	"net/http"
+	"strings"
+
+	"app/database"
+	"app/views"
 
 	"github.com/tunedmystic/rio"
+	"github.com/tunedmystic/rio/dom"
 )
 
-func HandleIndex() http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) error {
-		rd := Conf.NewRenderData(r)
-		return rio.Render(w, "index", http.StatusOK, rd)
-	}
-
-	notFound := func(next rio.HandlerFunc) rio.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) error {
-			if r.URL.Path != "/" {
-				rd := Conf.NewRenderData(r)
-				rd.NotFound = true
-				return rio.Render(w, "404", http.StatusNotFound, rd)
-			}
-			return next(w, r)
-		}
-	}
-
-	return rio.MakeHandler(notFound(fn))
+// render writes an HTML dom node with the given status.
+func render(w http.ResponseWriter, status int, node dom.Node) error {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	return node.Render(w)
 }
 
-func HandleStatic() http.Handler {
-	age := 1_209_600 // 2 weeks
-	cache := rio.CacheControlWithAge(age)
-	return cache(rio.FileServer(Static))
+func HandleHome() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		// Treat any unknown path under "/" as 404.
+		if r.URL.Path != "/" {
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Not found")
+			return render(w, http.StatusNotFound, views.NotFound(Conf.PageData(), meta))
+		}
+		meta := Conf.NewMeta(r.URL.RequestURI(), "")
+		return render(w, http.StatusOK, views.Home(Conf.PageData(), meta))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleMessages(store *database.Store) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		if r.Method == http.MethodPost {
+			body := strings.TrimSpace(r.FormValue("body"))
+			if body != "" {
+				if err := store.CreateMessage(r.Context(), body); err != nil {
+					return err
+				}
+			}
+			http.Redirect(w, r, "/messages", http.StatusSeeOther)
+			return nil
+		}
+
+		msgs, err := store.ListMessages(r.Context())
+		if err != nil {
+			return err
+		}
+		meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
+		return render(w, http.StatusOK, views.Messages(Conf.PageData(), meta, msgs))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleAbout() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "About")
+		return render(w, http.StatusOK, views.About(Conf.PageData(), meta))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandlePrivacyPolicy() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "Privacy Policy")
+		return render(w, http.StatusOK, views.PrivacyPolicy(Conf.PageData(), meta))
+	}
+	return rio.MakeHandler(fn)
 }
 
 func HandleVersion() http.Handler {
@@ -37,49 +75,15 @@ func HandleVersion() http.Handler {
 		BuildDate string
 		BuildHash string
 		BuildProd bool
-	}{
-		BuildDate: BuildDate,
-		BuildHash: BuildHash,
-		BuildProd: !Conf.Debug,
-	}
+	}{BuildDate: BuildDate, BuildHash: BuildHash, BuildProd: !Conf.Debug}
 
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		return rio.Json200(w, version)
 	}
-
 	return rio.MakeHandler(fn)
 }
 
-func HandleAbout() http.Handler {
-	MetaTitle := join("About ", Conf.SiteName, " - Learn More about Us and Our Story")
-	MetaDescription := join("Welcome to ", Conf.SiteName, "! Learn more about our story and mission. Drop us a line if you have any questions or suggestions.")
-	Heading := "About"
-
-	fn := func(w http.ResponseWriter, r *http.Request) error {
-		rd := Conf.NewRenderData(r)
-		rd.MetaTitle = MetaTitle
-		rd.MetaDescription = MetaDescription
-		rd.Heading = Heading
-
-		return rio.Render(w, "about", http.StatusOK, rd)
-	}
-
-	return rio.MakeHandler(fn)
-}
-
-func HandlePrivacyPolicy() http.Handler {
-	MetaTitle := join("Privacy Policy - Information and Collection for ", Conf.SiteName)
-	MetaDescription := join("The privacy policy page for ", Conf.SiteName, " describes how we may collect information when you use our services.")
-	Heading := "Privacy Policy"
-
-	fn := func(w http.ResponseWriter, r *http.Request) error {
-		rd := Conf.NewRenderData(r)
-		rd.MetaTitle = MetaTitle
-		rd.MetaDescription = MetaDescription
-		rd.Heading = Heading
-
-		return rio.Render(w, "privacy-policy", http.StatusOK, rd)
-	}
-
-	return rio.MakeHandler(fn)
+func HandleStatic() http.Handler {
+	cache := rio.CacheControlWithAge(1_209_600) // 2 weeks
+	return cache(rio.FileServer(staticFS))
 }
