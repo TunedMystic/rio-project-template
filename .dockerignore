@@ -1,13 +1,10 @@
-# Binaries
 bin
-
-# Files
-*.sqlite-shm
-*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
 .DS_Store
-
-# Directories
 .vscode
 .notes
 .misc
 .tmp
+data
