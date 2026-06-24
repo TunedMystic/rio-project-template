@@ -117,20 +117,23 @@ func defaultTokens() ui.Tokens {
 		FontSizeLg:        "20px",
 		FontSizeXl:        "24px",
 		FontSize2xl:       "30px",
-		ColorPrimary:      "#4f46e5",
+		// A calm, warm palette: a single deep-teal accent on warm-stone
+		// neutrals, white cards floating on a soft cream canvas. Edit these
+		// to rebrand the whole app — every component reads these variables.
+		ColorPrimary:      "#0f766e", // deep teal
 		OnPrimary:         "#ffffff",
-		ColorSecondary:    "#475569",
+		ColorSecondary:    "#57534e", // warm stone-600
 		OnSecondary:       "#ffffff",
-		ColorBackground:   "#ffffff",
-		ColorSurface:      "#f8fafc",
-		ColorText:         "#0f172a",
-		ColorTextMuted:    "#64748b",
-		ColorBorder:       "#e2e8f0",
-		ColorSuccess:      "#16a34a",
-		ColorWarning:      "#d97706",
-		ColorDanger:       "#dc2626",
-		ColorInfo:         "#2563eb",
-		RadiusBase:        "0.5rem",
+		ColorBackground:   "#f8f6f1", // warm cream canvas
+		ColorSurface:      "#ffffff", // white cards
+		ColorText:         "#1c1917", // stone-900
+		ColorTextMuted:    "#78716c", // stone-500
+		ColorBorder:       "#e7e5e4", // stone-200
+		ColorSuccess:      "#15803d",
+		ColorWarning:      "#b45309",
+		ColorDanger:       "#be123c",
+		ColorInfo:         "#0e7490",
+		RadiusBase:        "0.75rem",
 		FontWeightHeading: "700",
 	}
 }

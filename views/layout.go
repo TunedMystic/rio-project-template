@@ -4,12 +4,16 @@ import (
 	"app/config"
 
 	"github.com/tunedmystic/rio/dom"
-	"github.com/tunedmystic/rio/ui"
 )
 
 // Page wraps body content in the full HTML document: head (tokens + meta +
-// stylesheet), navbar, main, footer.
+// stylesheet), navbar, main, footer. Body sections are placed full-width so
+// each page can run header bands edge-to-edge and constrain its own content.
 func Page(pd config.PageData, meta config.Meta, body ...dom.Node) dom.Node {
+	main := make([]dom.Node, 0, len(body)+1)
+	main = append(main, dom.Class("flex-1"))
+	main = append(main, body...)
+
 	return dom.Doctype(dom.Html(
 		dom.Lang("en"),
 		dom.Head(
@@ -21,10 +25,23 @@ func Page(pd config.PageData, meta config.Meta, body ...dom.Node) dom.Node {
 			dom.Link(dom.Rel("stylesheet"), dom.Href("/static/css/styles.css")),
 		),
 		dom.Body(
-			dom.Class("min-h-screen flex flex-col bg-[var(--color-background)] text-[var(--color-text)] font-[family-name:var(--font-family)] text-[length:var(--font-size-base)] leading-relaxed antialiased"),
+			dom.Class("min-h-screen flex flex-col bg-[var(--color-background)] text-[var(--color-text)] font-[family-name:var(--font-family)] text-[length:var(--font-size-base)] leading-relaxed"),
 			navbar(pd),
-			dom.Main(dom.Class("flex-1 py-10"), ui.Container(body...)),
+			dom.Main(main...),
 			footer(pd),
 		),
 	))
+}
+
+// shell centers page content at a comfortable reading width.
+func shell(children ...dom.Node) dom.Node {
+	return dom.Div(withClass("mx-auto w-full max-w-5xl px-5", children)...)
+}
+
+// withClass prepends a class attribute to a children slice.
+func withClass(class string, children []dom.Node) []dom.Node {
+	out := make([]dom.Node, 0, len(children)+1)
+	out = append(out, dom.Class(class))
+	out = append(out, children...)
+	return out
 }
