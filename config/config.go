@@ -124,7 +124,7 @@ func defaultTokens() ui.Tokens {
 		OnPrimary:         "#ffffff",
 		ColorSecondary:    "#57534e", // warm stone-600
 		OnSecondary:       "#ffffff",
-		ColorBackground:   "#f8f6f1", // warm cream canvas
+		ColorBackground:   "#fcfbf9", // near-white canvas (a whisper of warm)
 		ColorSurface:      "#ffffff", // white cards
 		ColorText:         "#1c1917", // stone-900
 		ColorTextMuted:    "#78716c", // stone-500

@@ -17,7 +17,7 @@ func Home(pd config.PageData, meta config.Meta) dom.Node {
 				eyebrow("Project template"),
 				dom.H1(
 					dom.Class("mt-3 max-w-2xl text-4xl sm:text-5xl [font-weight:var(--font-weight-heading)] tracking-tight leading-[1.1] text-[var(--color-text)]"),
-					dom.Text("A calm starting point for your next rio app."),
+					dom.Text("A clean starting point for your next app."),
 				),
 				dom.P(
 					dom.Class("mt-5 max-w-xl text-[length:var(--font-size-lg)] leading-relaxed text-[var(--color-text-muted)]"),

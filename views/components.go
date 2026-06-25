@@ -18,7 +18,10 @@ func navbar(pd config.PageData) dom.Node {
 		links = append(links, navLink(l))
 	}
 	return dom.Header(
-		dom.Class("border-b border-[var(--color-border)] bg-[var(--color-background)]"),
+		// The page canvas is near-white; the warmth lives here in the header
+		// band. This cream is the one intentionally hardcoded color — edit it
+		// (or swap for bg-[var(--color-background)]) to taste.
+		dom.Class("border-b border-[var(--color-border)] bg-[#f3efe6]"),
 		dom.Div(
 			dom.Class("mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-4"),
 			brand(pd),
