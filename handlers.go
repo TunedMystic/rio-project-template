@@ -84,6 +84,18 @@ func HandleVersion() http.Handler {
 }
 
 func HandleStatic() http.Handler {
-	cache := rio.CacheControlWithAge(1_209_600) // 2 weeks
-	return cache(rio.FileServer(staticFS))
+	fileServer := rio.FileServer(staticFS)
+	if Conf.Debug {
+		// In dev, never cache: rebuilt CSS/assets show up on a normal reload.
+		return noStore(fileServer)
+	}
+	return rio.CacheControlWithAge(1_209_600)(fileServer) // 2 weeks in prod
+}
+
+// noStore disables caching, so the browser always refetches the asset.
+func noStore(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
 }
