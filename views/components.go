@@ -105,6 +105,18 @@ func pageHeader(title, subtitle string) dom.Node {
 	)
 }
 
+// ruledHeading is a section title underlined by a soft accent rule — gives a
+// card or content group a crisp, labeled top.
+func ruledHeading(title string) dom.Node {
+	return dom.Div(
+		dom.Class("border-b border-[var(--color-primary)]/30 pb-3"),
+		dom.H2(
+			dom.Class("text-[length:var(--font-size-xl)] [font-weight:var(--font-weight-heading)] tracking-tight text-[var(--color-text)]"),
+			dom.Text(title),
+		),
+	)
+}
+
 // featureRow is the signature element: a soft accent icon tile, a title and
 // muted description, and a chevron — the whole row is a single link that lifts
 // on hover.

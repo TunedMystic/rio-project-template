@@ -1,6 +1,8 @@
 package views
 
 import (
+	"strconv"
+
 	"app/config"
 	"app/database"
 
@@ -10,9 +12,9 @@ import (
 
 func Home(pd config.PageData, meta config.Meta) dom.Node {
 	return Page(pd, meta,
-		// Hero — the page's thesis: this is a calm, ready-to-build starting point.
+		// Hero — the page's thesis: a clean, ready-to-build starting point.
 		dom.Section(
-			dom.Class("py-16 sm:py-24"),
+			dom.Class("py-16 sm:py-20"),
 			shell(
 				eyebrow("Project template"),
 				dom.H1(
@@ -31,9 +33,27 @@ func Home(pd config.PageData, meta config.Meta) dom.Node {
 			),
 		),
 
-		// What's inside — the signature feature rows.
+		// Get started — the signature stepper, housed in a bordered card.
 		dom.Section(
-			dom.Class("pb-12"),
+			dom.Class("pb-4"),
+			shell(
+				card(
+					ruledHeading("Get started in three steps"),
+					dom.Div(
+						dom.Class("mt-8"),
+						steps(
+							step{"1", "Clone", "Fork the template and open it."},
+							step{"2", "Configure", "Set ProjectName and your brand tokens."},
+							step{"3", "Build", "Run it and start shipping."},
+						),
+					),
+				),
+			),
+		),
+
+		// What's inside — the feature rows.
+		dom.Section(
+			dom.Class("py-12"),
 			shell(
 				sectionLabel("What's inside"),
 				dom.Div(
@@ -60,10 +80,10 @@ func About(pd config.PageData, meta config.Meta) dom.Node {
 					ui.Text(ui.TextDefault, "To make it yours, open config/config.go: set ProjectName, edit the brand tokens, and reshape these pages. Delete the messages demo whenever you're ready."),
 				),
 				dom.Div(
-					dom.Class("mt-10"),
-					sectionLabel("What you get"),
+					dom.Class("mt-10 max-w-2xl"),
+					ruledHeading("What you get"),
 					dom.Ul(
-						dom.Class("mt-4 grid gap-3 sm:grid-cols-2"),
+						dom.Class("mt-5 grid gap-3 sm:grid-cols-2"),
 						checkItem("Server-rendered with rio/dom"),
 						checkItem("Themed rio/ui components"),
 						checkItem("SQLite with built-in migrations"),
@@ -116,27 +136,53 @@ func NotFound(pd config.PageData, meta config.Meta) dom.Node {
 }
 
 func Messages(pd config.PageData, meta config.Meta, msgs []database.Message) dom.Node {
-	form := ui.Card(
-		dom.Form(
-			dom.Method("post"),
-			dom.Action("/messages"),
-			ui.TextField("body", "New message", "", ""),
-			submitButton("Add message"),
-		),
-	)
-
 	return Page(pd, meta,
 		pageHeader("Messages", "A SQLite-backed demo. Add a message and it persists across restarts."),
 		dom.Section(
 			dom.Class("py-12"),
 			shell(
-				dom.Div(dom.Class("max-w-xl"), form, messagesList(msgs)),
+				dom.Div(
+					dom.Class("grid items-start gap-6 lg:grid-cols-[5fr_3fr]"),
+
+					// Left: the form, then the recent messages.
+					dom.Div(
+						card(
+							ruledHeading("Add a message"),
+							dom.Form(
+								dom.Method("post"),
+								dom.Action("/messages"),
+								dom.Class("mt-6"),
+								ui.TextField("body", "Message", "", ""),
+								submitButton("Add message"),
+							),
+						),
+						messagesList(msgs),
+					),
+
+					// Right: a summary card echoing the checkout "order summary".
+					card(
+						ruledHeading("About this demo"),
+						dom.Div(
+							dom.Class("mt-2"),
+							summaryRow("Storage", "SQLite"),
+							summaryRow("Driver", "modernc (cgo-free)"),
+							summaryRow("Persistence", "Across restarts"),
+							summaryRow("Rendering", "rio/dom"),
+							summaryTotal("Messages stored", strconv.Itoa(len(msgs))),
+						),
+					),
+				),
 			),
 		),
 	)
 }
 
 // --- small page-level building blocks ---
+
+// card is a crisp white panel defined by a thin border — the Northwest surface.
+func card(children ...dom.Node) dom.Node {
+	return dom.Div(withClass("rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm sm:p-7", children)...)
+}
 
 // eyebrow is a short accent label that sits above a heading.
 func eyebrow(text string) dom.Node {
@@ -176,10 +222,69 @@ func checkItem(text string) dom.Node {
 	)
 }
 
+// step is one numbered stage in the getting-started stepper.
+type step struct{ n, title, desc string }
+
+// steps lays the stages out horizontally with connecting rules.
+func steps(items ...step) dom.Node {
+	nodes := make([]dom.Node, 0, len(items)+1)
+	nodes = append(nodes, dom.Class("flex items-start"))
+	for i, s := range items {
+		nodes = append(nodes, stepNode(s, i == 0, i == len(items)-1))
+	}
+	return dom.Div(nodes...)
+}
+
+func stepNode(s step, first, last bool) dom.Node {
+	line := "h-0.5 flex-1 bg-[var(--color-primary)]/30"
+	left, right := line, line
+	if first {
+		left = "h-0.5 flex-1 bg-transparent"
+	}
+	if last {
+		right = "h-0.5 flex-1 bg-transparent"
+	}
+	return dom.Div(
+		dom.Class("flex-1"),
+		dom.Div(
+			dom.Class("flex items-center"),
+			dom.Div(dom.Class(left)),
+			dom.Div(
+				dom.Class("flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] text-[length:var(--font-size-sm)] font-semibold"),
+				dom.Text(s.n),
+			),
+			dom.Div(dom.Class(right)),
+		),
+		dom.Div(
+			dom.Class("mt-3 px-2 text-center"),
+			dom.Div(dom.Class("font-semibold text-[var(--color-text)]"), dom.Text(s.title)),
+			dom.Div(dom.Class("mt-1 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text(s.desc)),
+		),
+	)
+}
+
+// summaryRow is a label/value line in the summary card.
+func summaryRow(label, value string) dom.Node {
+	return dom.Div(
+		dom.Class("flex items-center justify-between border-b border-[var(--color-border)] py-3"),
+		dom.Span(dom.Class("text-[var(--color-text-muted)]"), dom.Text(label)),
+		dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text(value)),
+	)
+}
+
+// summaryTotal is the highlighted bottom row of the summary card.
+func summaryTotal(label, value string) dom.Node {
+	return dom.Div(
+		dom.Class("mt-3 flex items-center justify-between rounded-[var(--radius-base)] bg-[var(--color-background)] px-4 py-3"),
+		dom.Span(dom.Class("font-semibold text-[var(--color-text)]"), dom.Text(label)),
+		dom.Span(dom.Class("text-[length:var(--font-size-lg)] font-bold text-[var(--color-primary)]"), dom.Text(value)),
+	)
+}
+
 func messagesList(msgs []database.Message) dom.Node {
 	if len(msgs) == 0 {
 		return dom.Div(
-			dom.Class("mt-8 rounded-[var(--radius-base)] border border-dashed border-[var(--color-border)] p-8 text-center"),
+			dom.Class("mt-6 rounded-[var(--radius-base)] border border-dashed border-[var(--color-border)] p-8 text-center"),
 			dom.P(dom.Class("text-[var(--color-text-muted)]"), dom.Text("No messages yet. Add the first one above.")),
 		)
 	}
@@ -189,7 +294,7 @@ func messagesList(msgs []database.Message) dom.Node {
 		items = append(items, messageCard(m))
 	}
 	return dom.Div(
-		dom.Class("mt-10"),
+		dom.Class("mt-8"),
 		sectionLabel("Recent"),
 		dom.Div(withClass("mt-4 space-y-3", items)...),
 	)
