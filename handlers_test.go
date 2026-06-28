@@ -78,3 +78,24 @@ func TestHandleMessages_POSTCreatesAndRedirects(t *testing.T) {
 		t.Errorf("message not persisted: %+v", msgs)
 	}
 }
+
+func TestHandleMessages_POSTBlankShowsError(t *testing.T) {
+	store := newTestStore(t)
+
+	// "+++" decodes to "   " (spaces); after trimming it is blank.
+	req := httptest.NewRequest(http.MethodPost, "/messages", strings.NewReader("body=+++"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	HandleMessages(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "cannot be blank") {
+		t.Error("response missing validation error")
+	}
+	msgs, _ := store.ListMessages(context.Background())
+	if len(msgs) != 0 {
+		t.Errorf("blank message should not persist, got %d", len(msgs))
+	}
+}

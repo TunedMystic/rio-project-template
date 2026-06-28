@@ -135,7 +135,7 @@ func NotFound(pd config.PageData, meta config.Meta) dom.Node {
 	)
 }
 
-func Messages(pd config.PageData, meta config.Meta, msgs []database.Message) dom.Node {
+func Messages(pd config.PageData, meta config.Meta, msgs []database.Message, bodyValue, bodyErr string) dom.Node {
 	return Page(pd, meta,
 		pageHeader("Messages", "A SQLite-backed demo. Add a message and it persists across restarts."),
 		dom.Section(
@@ -152,7 +152,7 @@ func Messages(pd config.PageData, meta config.Meta, msgs []database.Message) dom
 								dom.Method("post"),
 								dom.Action("/messages"),
 								dom.Class("mt-6"),
-								ui.TextField("body", "Message", "", ""),
+								ui.TextField("body", "Message", bodyValue, bodyErr),
 								submitButton("Add message"),
 							),
 						),

@@ -11,6 +11,7 @@ import (
 
 	"github.com/tunedmystic/rio"
 	"github.com/tunedmystic/rio/dom"
+	"github.com/tunedmystic/rio/forms"
 )
 
 // render writes an HTML dom node with the given status.
@@ -36,11 +37,24 @@ func HandleHome() http.Handler {
 func HandleMessages(store *database.Store) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		if r.Method == http.MethodPost {
+			// Validate with rio/forms: required, and a sane max length.
 			body := strings.TrimSpace(r.FormValue("body"))
-			if body != "" {
-				if err := store.CreateMessage(r.Context(), body); err != nil {
+			form := forms.New()
+			form.CleanString("body", body, forms.StrRequired(), forms.StrLte(280))
+
+			if !form.IsValid() {
+				msgs, err := store.ListMessages(r.Context())
+				if err != nil {
 					return err
 				}
+				field := form.MustField("body")
+				meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
+				return render(w, http.StatusUnprocessableEntity,
+					views.Messages(Conf.PageData(), meta, msgs, field.Value(), field.Err().Error()))
+			}
+
+			if err := store.CreateMessage(r.Context(), form.CleanedString("body")); err != nil {
+				return err
 			}
 			http.Redirect(w, r, "/messages", http.StatusSeeOther)
 			return nil
@@ -51,7 +65,7 @@ func HandleMessages(store *database.Store) http.Handler {
 			return err
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
-		return render(w, http.StatusOK, views.Messages(Conf.PageData(), meta, msgs))
+		return render(w, http.StatusOK, views.Messages(Conf.PageData(), meta, msgs, "", ""))
 	}
 	return rio.MakeHandler(fn)
 }

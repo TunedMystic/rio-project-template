@@ -18,6 +18,7 @@ github.com/remyoudompheng/bigfft
 github.com/tunedmystic/rio
 github.com/tunedmystic/rio/dom
 github.com/tunedmystic/rio/format
+github.com/tunedmystic/rio/forms
 github.com/tunedmystic/rio/ui
 # golang.org/x/sys v0.44.0
 ## explicit; go 1.25.0

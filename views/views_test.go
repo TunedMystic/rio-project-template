@@ -46,7 +46,7 @@ func TestMessages_ListsBodies(t *testing.T) {
 	meta := config.Meta{Title: "Messages"}
 	msgs := []database.Message{{ID: 1, Body: "first-msg"}, {ID: 2, Body: "second-msg"}}
 	var b bytes.Buffer
-	_ = Messages(pd, meta, msgs).Render(&b)
+	_ = Messages(pd, meta, msgs, "", "").Render(&b)
 	html := b.String()
 
 	if !strings.Contains(html, "first-msg") || !strings.Contains(html, "second-msg") {
