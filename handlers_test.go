@@ -79,6 +79,22 @@ func TestHandleMessages_POSTCreatesAndRedirects(t *testing.T) {
 	}
 }
 
+func TestHandleRobots(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	rec := httptest.NewRecorder()
+	HandleRobots().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.Contains(ct, "text/plain") {
+		t.Errorf("Content-Type = %q, want text/plain", ct)
+	}
+	if !strings.Contains(rec.Body.String(), "User-agent") {
+		t.Error("robots.txt missing User-agent directive")
+	}
+}
+
 func TestHandleMessages_POSTBlankShowsError(t *testing.T) {
 	store := newTestStore(t)
 

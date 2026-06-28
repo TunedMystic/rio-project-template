@@ -99,6 +99,18 @@ func HandleVersion() http.Handler {
 	return rio.MakeHandler(fn)
 }
 
+// HandleRobots serves a permissive robots.txt. Tighten or point at a sitemap
+// per product.
+func HandleRobots() http.Handler {
+	const body = "User-agent: *\nAllow: /\n"
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = io.WriteString(w, body)
+		return nil
+	}
+	return rio.MakeHandler(fn)
+}
+
 // HandleHealth reports service health by pinging the database. It returns 200
 // when reachable and 503 otherwise — suitable for load balancers and orchestrators.
 func HandleHealth(db *sql.DB) http.Handler {

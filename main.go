@@ -27,7 +27,7 @@ var (
 var staticFS embed.FS
 
 // Conf is the application configuration.
-var Conf = config.New(BuildEnv)
+var Conf = config.New(BuildEnv, BuildHash)
 
 func main() {
 	if err := run(); err != nil {
@@ -58,6 +58,7 @@ func run() error {
 	s.Handle("/privacy-policy", HandlePrivacyPolicy())
 	s.Handle("/version", HandleVersion())
 	s.Handle("/healthz", HandleHealth(db))
+	s.Handle("/robots.txt", HandleRobots())
 	s.Handle("/static/", HandleStatic())
 
 	// Cancel the context on Ctrl-C or SIGTERM (e.g. `docker stop`) so the

@@ -16,7 +16,7 @@ func render(n interface{ Render(w *bytes.Buffer) error }) string {
 }
 
 func testPageData() config.PageData {
-	c := config.New("debug")
+	c := config.New("debug", "v1test")
 	return c.PageData()
 }
 
@@ -30,9 +30,10 @@ func TestPage_RendersHeadAndChrome(t *testing.T) {
 	for _, want := range []string{
 		"<!DOCTYPE html>",
 		"<title>Hi - Rio Starter</title>",
-		"<style>",                       // StyleVars block
-		"--color-primary:",              // a token variable
-		`href="/static/css/styles.css"`, // stylesheet link
+		"<style>",                              // StyleVars block
+		"--color-primary:",                     // a token variable
+		`href="/static/css/styles.css?v=v1test"`, // versioned stylesheet link
+		`rel="icon"`,                           // favicon link
 		"</html>",
 	} {
 		if !strings.Contains(html, want) {

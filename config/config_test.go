@@ -25,7 +25,7 @@ func TestDBPath_DevDefaultsToCurrentDir(t *testing.T) {
 
 func TestNew_PopulatesDBPathAndTokens(t *testing.T) {
 	t.Setenv("DB_DIR", "/data")
-	c := New("production")
+	c := New("production", "abc123")
 	if c.ProjectName == "" {
 		t.Fatal("ProjectName is empty")
 	}
@@ -35,4 +35,38 @@ func TestNew_PopulatesDBPathAndTokens(t *testing.T) {
 	if c.Tokens.ColorPrimary == "" {
 		t.Error("Tokens.ColorPrimary is empty")
 	}
+}
+
+func TestNew_CarriesAssetVersion(t *testing.T) {
+	c := New("production", "abc123")
+	if c.AssetVersion != "abc123" {
+		t.Errorf("AssetVersion = %q, want abc123", c.AssetVersion)
+	}
+	if c.PageData().AssetVersion != "abc123" {
+		t.Errorf("PageData.AssetVersion = %q, want abc123", c.PageData().AssetVersion)
+	}
+}
+
+func TestAddrFromEnv(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		t.Setenv("ADDR", "")
+		t.Setenv("PORT", "")
+		if got := addrFromEnv(); got != ":3000" {
+			t.Errorf("got %q, want :3000", got)
+		}
+	})
+	t.Run("PORT", func(t *testing.T) {
+		t.Setenv("ADDR", "")
+		t.Setenv("PORT", "8080")
+		if got := addrFromEnv(); got != ":8080" {
+			t.Errorf("got %q, want :8080", got)
+		}
+	})
+	t.Run("ADDR overrides PORT", func(t *testing.T) {
+		t.Setenv("ADDR", "127.0.0.1:9000")
+		t.Setenv("PORT", "8080")
+		if got := addrFromEnv(); got != "127.0.0.1:9000" {
+			t.Errorf("got %q, want 127.0.0.1:9000", got)
+		}
+	})
 }

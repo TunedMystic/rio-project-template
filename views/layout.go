@@ -21,8 +21,9 @@ func Page(pd config.PageData, meta config.Meta, body ...dom.Node) dom.Node {
 			dom.Meta(dom.Name("viewport"), dom.Content("width=device-width, initial-scale=1")),
 			dom.TitleEl(dom.Text(meta.Title)),
 			dom.Meta(dom.Name("description"), dom.Content(meta.Description)),
+			dom.Link(dom.Rel("icon"), dom.Href("/static/img/favicon.webp")),
 			pd.Tokens.StyleVars(),
-			dom.Link(dom.Rel("stylesheet"), dom.Href("/static/css/styles.css")),
+			dom.Link(dom.Rel("stylesheet"), dom.Href(cssHref(pd.AssetVersion))),
 		),
 		dom.Body(
 			dom.Class("min-h-screen flex flex-col bg-[var(--color-background)] text-[var(--color-text)] font-[family-name:var(--font-family)] text-[length:var(--font-size-base)] leading-relaxed"),
@@ -31,6 +32,15 @@ func Page(pd config.PageData, meta config.Meta, body ...dom.Node) dom.Node {
 			footer(pd),
 		),
 	))
+}
+
+// cssHref appends the asset version as a query string so each deploy busts the
+// browser cache; without a version it returns the bare path.
+func cssHref(version string) string {
+	if version == "" {
+		return "/static/css/styles.css"
+	}
+	return "/static/css/styles.css?v=" + version
 }
 
 // shell centers page content at a comfortable reading width.

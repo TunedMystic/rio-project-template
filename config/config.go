@@ -23,39 +23,43 @@ type Meta struct {
 
 // PageData is the subset of config the views need to render a page.
 type PageData struct {
-	SiteName    string
-	Tokens      ui.Tokens
-	HeaderLinks []Link
-	FooterLinks []Link
+	SiteName     string
+	AssetVersion string
+	Tokens       ui.Tokens
+	HeaderLinks  []Link
+	FooterLinks  []Link
 }
 
 // Config holds the product configuration. ProjectName is the per-clone seam.
 type Config struct {
-	ProjectName string
-	SiteName    string
-	SiteURL     string
-	Description string
-	Addr        string
-	Debug       bool
-	DBPath      string
-	Tokens      ui.Tokens
-	HeaderLinks []Link
-	FooterLinks []Link
+	ProjectName  string
+	SiteName     string
+	SiteURL      string
+	Description  string
+	Addr         string
+	Debug        bool
+	DBPath       string
+	AssetVersion string
+	Tokens       ui.Tokens
+	HeaderLinks  []Link
+	FooterLinks  []Link
 }
 
-// New builds the Config. buildEnv comes from the main package's build-time var;
-// "debug" selects development defaults.
-func New(buildEnv string) Config {
+// New builds the Config. buildEnv comes from the main package's build-time var
+// ("debug" selects development defaults); buildHash versions static assets so a
+// deploy busts the browser cache.
+func New(buildEnv, buildHash string) Config {
 	debug := buildEnv == "debug"
 
 	c := Config{
-		ProjectName: "riostarter", // <-- change this per product; sets the db file name
-		SiteName:    "Rio Starter",
-		SiteURL:     "https://riostarter.example.com",
-		Description: "A starter built with rio. Clone it, set ProjectName, ship.",
-		Addr:        ":3000",
-		Debug:       debug,
-		Tokens:      defaultTokens(),
+		ProjectName:  "riostarter", // <-- change this per product; sets the db file name
+		SiteName:     "Rio Starter",
+		SiteURL:      "https://riostarter.example.com",
+		Description:  "A starter built with rio. Clone it, set ProjectName, ship.",
+		Addr:         addrFromEnv(),
+		Debug:        debug,
+		AssetVersion: buildHash,
+		Tokens:       defaultTokens(),
 		HeaderLinks: []Link{
 			{Text: "Messages", Href: "/messages"},
 			{Text: "About", Href: "/about"},
@@ -68,6 +72,18 @@ func New(buildEnv string) Config {
 	}
 	c.DBPath = DBPath(c.ProjectName, debug)
 	return c
+}
+
+// addrFromEnv resolves the listen address: ADDR (full host:port) wins, else
+// PORT (":<port>"), else the :3000 default.
+func addrFromEnv() string {
+	if addr := os.Getenv("ADDR"); addr != "" {
+		return addr
+	}
+	if port := os.Getenv("PORT"); port != "" {
+		return ":" + port
+	}
+	return ":3000"
 }
 
 // DBPath derives the SQLite file path from the project name. The directory is
@@ -87,10 +103,11 @@ func DBPath(projectName string, debug bool) string {
 // PageData returns the view-facing subset of the config.
 func (c Config) PageData() PageData {
 	return PageData{
-		SiteName:    c.SiteName,
-		Tokens:      c.Tokens,
-		HeaderLinks: c.HeaderLinks,
-		FooterLinks: c.FooterLinks,
+		SiteName:     c.SiteName,
+		AssetVersion: c.AssetVersion,
+		Tokens:       c.Tokens,
+		HeaderLinks:  c.HeaderLinks,
+		FooterLinks:  c.FooterLinks,
 	}
 }
 

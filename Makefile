@@ -18,6 +18,19 @@ build: clean tailwind
 	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)'" -o bin/app .
 
 
+## @(app) - 🧪 Run the tests
+test:
+	@echo "✨🧪✨ Running tests\n"
+	@go test ./...
+
+
+## @(app) - 🔎 Vet and test (what CI runs)
+check:
+	@echo "✨🔎✨ Vetting and testing\n"
+	@go vet ./...
+	@go test ./...
+
+
 ## @(app) - 🗑️ Delete the local dev database
 db-reset:
 	@echo "✨🗑️✨ Removing local database\n"
