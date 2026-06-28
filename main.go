@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"fmt"
 	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"app/config"
 	"app/database"
@@ -24,14 +30,23 @@ var staticFS embed.FS
 var Conf = config.New(BuildEnv)
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// run wires up the app and serves until a shutdown signal arrives, then closes
+// the database cleanly. Returning an error (instead of log.Fatal everywhere)
+// keeps deferred cleanup running on the way out.
+func run() error {
 	db, err := database.Open(Conf.DBPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		return fmt.Errorf("open db: %w", err)
 	}
 	defer db.Close()
 
 	if err := database.MigrateUp(db); err != nil {
-		log.Fatalf("migrate: %v", err)
+		return fmt.Errorf("migrate: %w", err)
 	}
 
 	store := database.NewStore(db)
@@ -45,5 +60,16 @@ func main() {
 	s.Handle("/healthz", HandleHealth(db))
 	s.Handle("/static/", HandleStatic())
 
-	log.Fatal(s.Serve(Conf.Addr))
+	// Cancel the context on Ctrl-C or SIGTERM (e.g. `docker stop`) so the
+	// server drains in-flight requests before the deferred db.Close runs.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	ln, err := net.Listen("tcp", Conf.Addr)
+	if err != nil {
+		return fmt.Errorf("listen on %s: %w", Conf.Addr, err)
+	}
+
+	log.Printf("listening on %s", Conf.Addr)
+	return serve(ctx, newHTTPServer(Conf.Addr, s.Handler()), ln)
 }
