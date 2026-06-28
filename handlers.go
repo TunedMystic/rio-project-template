@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"io"
 	"net/http"
 	"strings"
 
@@ -79,6 +81,21 @@ func HandleVersion() http.Handler {
 
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		return rio.Json200(w, version)
+	}
+	return rio.MakeHandler(fn)
+}
+
+// HandleHealth reports service health by pinging the database. It returns 200
+// when reachable and 503 otherwise — suitable for load balancers and orchestrators.
+func HandleHealth(db *sql.DB) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		if err := db.PingContext(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = io.WriteString(w, "unavailable")
+			return nil
+		}
+		_, _ = io.WriteString(w, "ok")
+		return nil
 	}
 	return rio.MakeHandler(fn)
 }

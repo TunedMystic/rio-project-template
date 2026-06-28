@@ -11,6 +11,28 @@ import (
 	"app/database"
 )
 
+func TestHandleHealth(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "hz.db"))
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+	HandleHealth(db).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("healthy status = %d, want 200", rec.Code)
+	}
+
+	// A closed DB is unhealthy.
+	db.Close()
+	rec = httptest.NewRecorder()
+	HandleHealth(db).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("unhealthy status = %d, want 503", rec.Code)
+	}
+}
+
 func newTestStore(t *testing.T) *database.Store {
 	t.Helper()
 	db, err := database.Open(filepath.Join(t.TempDir(), "h.db"))

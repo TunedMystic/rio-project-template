@@ -42,6 +42,7 @@ func main() {
 	s.Handle("/about", HandleAbout())
 	s.Handle("/privacy-policy", HandlePrivacyPolicy())
 	s.Handle("/version", HandleVersion())
+	s.Handle("/healthz", HandleHealth(db))
 	s.Handle("/static/", HandleStatic())
 
 	log.Fatal(s.Serve(Conf.Addr))
