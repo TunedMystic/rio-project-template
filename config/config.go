@@ -120,7 +120,7 @@ func defaultTokens() ui.Tokens {
 		// A calm, warm palette: a single deep-teal accent on warm-stone
 		// neutrals, white cards floating on a soft cream canvas. Edit these
 		// to rebrand the whole app — every component reads these variables.
-		ColorPrimary:      "#0f766e", // deep teal
+		ColorPrimary:      "#0d9488", // vibrant teal
 		OnPrimary:         "#ffffff",
 		ColorSecondary:    "#57534e", // warm stone-600
 		OnSecondary:       "#ffffff",
