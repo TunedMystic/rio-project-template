@@ -104,3 +104,30 @@ func TestAppSecret_DevDefaults(t *testing.T) {
 		t.Error("prod APP_SECRET should stay empty when unset (caller fails fast)")
 	}
 }
+
+func TestStripeConfig(t *testing.T) {
+	t.Setenv("STRIPE_SECRET_KEY", "sk_test_123")
+	t.Setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+	t.Setenv("STRIPE_PRICE_PRO", "price_pro")
+	t.Setenv("STRIPE_PRICE_EBOOK", "") // unavailable
+
+	c := New("debug", "h")
+	if c.StripeSecretKey != "sk_test_123" || c.StripeWebhookSecret != "whsec_123" {
+		t.Fatalf("stripe creds not loaded: %+v", c)
+	}
+	if !c.StripeEnabled() {
+		t.Error("StripeEnabled should be true when the secret key is set")
+	}
+
+	pro, ok := c.ProductByKey("pro")
+	if !ok || pro.Kind != Subscription || pro.PriceID != "price_pro" || !pro.Available() {
+		t.Errorf("pro product = %+v ok=%v", pro, ok)
+	}
+	ebook, ok := c.ProductByKey("ebook")
+	if !ok || ebook.Kind != OneTime || ebook.Available() {
+		t.Errorf("ebook should exist but be unavailable: %+v ok=%v", ebook, ok)
+	}
+	if _, ok := c.ProductByKey("nope"); ok {
+		t.Error("ProductByKey returned ok for an unknown key")
+	}
+}
