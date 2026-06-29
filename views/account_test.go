@@ -75,6 +75,7 @@ func TestBilling_SubscribeAndBuy(t *testing.T) {
 
 	// Subscribed → Manage (portal); owned one-time → "Owned".
 	bv.Status = "active"
+	bv.HasCustomer = true
 	bv.Owned = map[string]bool{"ebook": true}
 	var b2 bytes.Buffer
 	_ = Billing(pd, config.Meta{Title: "Billing"}, av, bv).Render(&b2)
@@ -84,5 +85,25 @@ func TestBilling_SubscribeAndBuy(t *testing.T) {
 	}
 	if !strings.Contains(html2, "Owned") {
 		t.Error("owned product should show an Owned badge")
+	}
+
+	// past_due with a Stripe customer → Manage (portal), NOT a second Subscribe form.
+	bv3 := BillingView{
+		StripeEnabled: true,
+		Products: []config.Product{
+			{Key: "pro", Name: "Pro", Kind: config.Subscription, PriceID: "price_pro"},
+		},
+		Status:      "past_due",
+		HasCustomer: true,
+		Owned:       map[string]bool{},
+	}
+	var b3 bytes.Buffer
+	_ = Billing(pd, config.Meta{Title: "Billing"}, av, bv3).Render(&b3)
+	html3 := b3.String()
+	if !strings.Contains(html3, `action="/account/billing/portal"`) {
+		t.Error("past_due subscriber should see Manage (portal) form")
+	}
+	if strings.Contains(html3, `value="pro"`) {
+		t.Error("past_due subscriber should NOT see a Subscribe checkout form for the pro product")
 	}
 }

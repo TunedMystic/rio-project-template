@@ -155,6 +155,7 @@ type BillingView struct {
 	Status        string // subscription_status
 	PeriodEnd     time.Time
 	Owned         map[string]bool
+	HasCustomer   bool // true when user.StripeCustomerID != ""
 }
 
 func Billing(pd config.PageData, meta config.Meta, av AccountView, bv BillingView) dom.Node {
@@ -187,7 +188,8 @@ func Billing(pd config.PageData, meta config.Meta, av AccountView, bv BillingVie
 func billingRow(av AccountView, p config.Product, bv BillingView) dom.Node {
 	var right dom.Node
 	switch {
-	case p.Kind == config.Subscription && bv.Status == "active" || p.Kind == config.Subscription && bv.Status == "trialing":
+	case p.Kind == config.Subscription && bv.HasCustomer:
+		// User already has (or had) a Stripe customer: route to portal to manage or fix.
 		right = billingForm("/account/billing/portal", av.CSRF, "", "Manage billing")
 	case p.Kind == config.Subscription:
 		right = billingForm("/account/billing/checkout", av.CSRF, p.Key, "Subscribe")
@@ -201,9 +203,10 @@ func billingRow(av AccountView, p config.Product, bv BillingView) dom.Node {
 
 	sub := "One-time purchase"
 	if p.Kind == config.Subscription {
-		sub = "Subscription"
 		if bv.Status == "active" || bv.Status == "trialing" {
 			sub = "Active"
+		} else {
+			sub = "Subscription"
 		}
 	}
 	return dom.Div(

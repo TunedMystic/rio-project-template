@@ -92,16 +92,25 @@ func HandleStripeWebhook(store *database.Store, bc billing.Client) http.Handler 
 			product, ok := Conf.ProductByKey(event.ProductKey)
 			if ok && product.Kind == config.OneTime {
 				if uid != 0 {
-					_ = store.GrantEntitlement(r.Context(), uid, event.ProductKey)
+					if err := store.GrantEntitlement(r.Context(), uid, event.ProductKey); err != nil {
+						rio.LogError(err)
+						return err
+					}
 				}
 			} else if uid != 0 && event.CustomerID != "" {
 				// Subscription checkout: ensure the customer is linked (status
 				// itself arrives via customer.subscription.updated).
-				_ = store.SetStripeCustomerID(r.Context(), uid, event.CustomerID)
+				if err := store.SetStripeCustomerID(r.Context(), uid, event.CustomerID); err != nil {
+					rio.LogError(err)
+					return err
+				}
 			}
 		case "customer.subscription.updated", "customer.subscription.deleted":
 			if event.CustomerID != "" {
-				_ = store.UpdateSubscription(r.Context(), event.CustomerID, event.Status, event.CurrentPeriodEnd)
+				if err := store.UpdateSubscription(r.Context(), event.CustomerID, event.Status, event.CurrentPeriodEnd); err != nil {
+					rio.LogError(err)
+					return err
+				}
 			}
 		}
 		w.WriteHeader(http.StatusOK)

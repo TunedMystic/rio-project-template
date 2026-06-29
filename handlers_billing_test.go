@@ -126,4 +126,9 @@ func TestHandleStripeWebhook_BadSignature(t *testing.T) {
 	}
 }
 
+// TestHandleStripeWebhook_StoreError: store-error path (500 on write failure)
+// is not tested here because *database.Store is a concrete type with no
+// injectable interface; simulating a DB error would require closing the
+// underlying DB, which would also break the FakeClient setup.  The behaviour
+// is covered by the handler code change (rio.LogError + return err → 500).
 func itoaTest(n int64) string { return strconv.FormatInt(n, 10) }

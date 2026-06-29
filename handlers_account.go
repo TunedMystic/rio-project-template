@@ -114,6 +114,7 @@ func HandleBilling(store *database.Store) http.Handler {
 			Status:        user.SubscriptionStatus,
 			PeriodEnd:     user.CurrentPeriodEnd,
 			Owned:         owned,
+			HasCustomer:   user.StripeCustomerID != "",
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Billing")
 		return render(w, http.StatusOK, views.Billing(Conf.PageDataFor(account(r)), meta, accountView(r, "billing"), bv))
