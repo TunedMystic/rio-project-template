@@ -2,6 +2,10 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -138,4 +142,146 @@ func account(r *http.Request) config.Account {
 		return config.Account{}
 	}
 	return config.Account{LoggedIn: true, Name: u.Name, Email: u.Email}
+}
+
+// googleSignIn resolves a Google identity to a user: by google_id, else by
+// verified email (linking it), else by creating the user. Unverified emails
+// are rejected.
+func googleSignIn(ctx context.Context, store *database.Store, gu auth.GoogleUser) (database.User, error) {
+	if !gu.EmailVerified {
+		return database.User{}, fmt.Errorf("google email not verified")
+	}
+	if u, err := store.UserByGoogleID(ctx, gu.Sub); err == nil {
+		return u, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return database.User{}, err
+	}
+
+	u, err := store.UserByEmail(ctx, gu.Email)
+	if err == nil {
+		if err := store.SetUserGoogleID(ctx, u.ID, gu.Sub); err != nil {
+			return database.User{}, err
+		}
+		if u.Name == "" && gu.Name != "" {
+			_ = store.UpdateUserName(ctx, u.ID, gu.Name)
+		}
+		return store.UserByID(ctx, u.ID)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return database.User{}, err
+	}
+
+	u, err = store.CreateUser(ctx, gu.Email, gu.Name)
+	if err != nil {
+		return database.User{}, err
+	}
+	if err := store.SetUserGoogleID(ctx, u.ID, gu.Sub); err != nil {
+		return database.User{}, err
+	}
+	u.GoogleID = gu.Sub
+	return u, nil
+}
+
+// googleLink attaches a Google identity to the current user, rejecting a
+// google_id already linked to a different account.
+func googleLink(ctx context.Context, store *database.Store, current database.User, gu auth.GoogleUser) error {
+	if !gu.EmailVerified {
+		return fmt.Errorf("google email not verified")
+	}
+	if existing, err := store.UserByGoogleID(ctx, gu.Sub); err == nil {
+		if existing.ID != current.ID {
+			return fmt.Errorf("That Google account is already linked to another user")
+		}
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	if err := store.SetUserGoogleID(ctx, current.ID, gu.Sub); err != nil {
+		return err
+	}
+	if current.Name == "" && gu.Name != "" {
+		_ = store.UpdateUserName(ctx, current.ID, gu.Name)
+	}
+	return nil
+}
+
+// HandleGoogleLogin starts the OAuth flow: it stores a signed state cookie and
+// redirects to Google's consent screen. mode=link (only honored for a
+// signed-in user) attaches Google to the current account on callback.
+func HandleGoogleLogin(oauth *auth.GoogleOAuth) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		mode := "login"
+		if r.URL.Query().Get("mode") == "link" {
+			if _, ok := auth.UserFrom(r.Context()); ok {
+				mode = "link"
+			}
+		}
+		next := auth.SafeNext(r.URL.Query().Get("next"))
+		state, _, err := auth.GenerateToken()
+		if err != nil {
+			return err
+		}
+		verifier := auth.NewVerifier()
+		auth.SetStateCookie(w, Conf.AppSecret,
+			auth.OAuthState{State: state, Next: next, Mode: mode, Verifier: verifier}, !Conf.Debug)
+		http.Redirect(w, r, oauth.AuthCodeURL(state, verifier), http.StatusSeeOther)
+		return nil
+	}
+	return rio.MakeHandler(fn)
+}
+
+// HandleGoogleCallback completes the OAuth flow: verify state, exchange the
+// code, fetch the profile, then either link to the current user or sign in.
+func HandleGoogleCallback(store *database.Store, oauth *auth.GoogleOAuth) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		st, ok := auth.ReadStateCookie(r, Conf.AppSecret)
+		auth.ClearStateCookie(w, !Conf.Debug)
+		if !ok || r.URL.Query().Get("state") != st.State {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return nil
+		}
+
+		token, err := oauth.Exchange(r.Context(), r.URL.Query().Get("code"), st.Verifier)
+		if err != nil {
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Sign-in failed")
+			return render(w, http.StatusOK, views.VerifyError(Conf.PageDataFor(account(r)), meta))
+		}
+		gu, err := oauth.FetchUser(r.Context(), token)
+		if err != nil {
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Sign-in failed")
+			return render(w, http.StatusOK, views.VerifyError(Conf.PageDataFor(account(r)), meta))
+		}
+
+		// Link mode: attach to the already-signed-in user.
+		if st.Mode == "link" {
+			if cur, ok := auth.UserFrom(r.Context()); ok {
+				if err := googleLink(r.Context(), store, cur, gu); err != nil {
+					http.Redirect(w, r, "/account/security?err="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+					return nil
+				}
+				http.Redirect(w, r, "/account/security?flash="+url.QueryEscape("Google connected"), http.StatusSeeOther)
+				return nil
+			}
+			// Session vanished mid-flow → fall through and sign in.
+		}
+
+		user, err := googleSignIn(r.Context(), store, gu)
+		if err != nil {
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Sign-in failed")
+			return render(w, http.StatusOK, views.VerifyError(Conf.PageDataFor(account(r)), meta))
+		}
+
+		sessTok, sessHash, err := auth.GenerateToken()
+		if err != nil {
+			return err
+		}
+		if err := store.CreateSession(r.Context(), sessHash, user.ID,
+			time.Now().Add(auth.SessionTTL), r.UserAgent(), clientIP(r, Conf.TrustProxy)); err != nil {
+			return err
+		}
+		auth.SetSessionCookie(w, sessTok, !Conf.Debug)
+		http.Redirect(w, r, auth.SafeNext(st.Next), http.StatusSeeOther)
+		return nil
+	}
+	return rio.MakeHandler(fn)
 }

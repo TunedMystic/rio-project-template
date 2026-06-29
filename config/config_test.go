@@ -104,3 +104,23 @@ func TestAppSecret_DevDefaults(t *testing.T) {
 		t.Error("prod APP_SECRET should stay empty when unset (caller fails fast)")
 	}
 }
+
+func TestGoogleEnabled_RequiresBothCreds(t *testing.T) {
+	t.Setenv("GOOGLE_CLIENT_ID", "client-id")
+	t.Setenv("GOOGLE_CLIENT_SECRET", "client-secret")
+	c := New("debug", "h")
+	if c.GoogleClientID != "client-id" || c.GoogleClientSecret != "client-secret" {
+		t.Fatalf("google creds not loaded: %+v", c)
+	}
+	if !c.GoogleEnabled() {
+		t.Error("GoogleEnabled should be true when both creds are set")
+	}
+	if !c.PageData().GoogleEnabled {
+		t.Error("PageData.GoogleEnabled should mirror GoogleEnabled()")
+	}
+
+	t.Setenv("GOOGLE_CLIENT_SECRET", "")
+	if New("debug", "h").GoogleEnabled() {
+		t.Error("GoogleEnabled should be false when the secret is missing")
+	}
+}

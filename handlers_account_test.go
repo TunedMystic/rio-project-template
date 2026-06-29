@@ -100,3 +100,33 @@ func TestHandleAccount_POSTBadCSRF(t *testing.T) {
 		t.Fatalf("status=%d, want 403", rec.Code)
 	}
 }
+
+func TestHandleDisconnectGoogle_ClearsLink(t *testing.T) {
+	store := authTestStore(t)
+	sess, u := loggedInRequestSession(t, store)
+	_ = store.SetUserGoogleID(context.Background(), u.ID, "sub-xyz")
+	csrf := auth.CSRFToken(Conf.AppSecret, sess.ID)
+
+	r, _ := loggedInWith(t, store, u, sess, http.MethodPost, "/account/google/disconnect", "_csrf="+csrf)
+	rec := httptest.NewRecorder()
+	HandleDisconnectGoogle(store).ServeHTTP(rec, r)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	got, _ := store.UserByID(context.Background(), u.ID)
+	if got.GoogleID != "" {
+		t.Errorf("GoogleID = %q, want empty after disconnect", got.GoogleID)
+	}
+}
+
+func TestHandleDisconnectGoogle_BadCSRF(t *testing.T) {
+	store := authTestStore(t)
+	sess, u := loggedInRequestSession(t, store)
+	r, _ := loggedInWith(t, store, u, sess, http.MethodPost, "/account/google/disconnect", "_csrf=wrong")
+	rec := httptest.NewRecorder()
+	HandleDisconnectGoogle(store).ServeHTTP(rec, r)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", rec.Code)
+	}
+}

@@ -32,32 +32,35 @@ type Meta struct {
 
 // PageData is the subset of config the views need to render a page.
 type PageData struct {
-	SiteName     string
-	AssetVersion string
-	Tokens       ui.Tokens
-	HeaderLinks  []Link
-	FooterLinks  []Link
-	Account      Account
-}
-
-// Config holds the product configuration. ProjectName is the per-clone seam.
-type Config struct {
-	ProjectName   string
 	SiteName      string
-	SiteURL       string
-	Description   string
-	Addr          string
-	Debug         bool
-	DBPath        string
 	AssetVersion  string
 	Tokens        ui.Tokens
 	HeaderLinks   []Link
 	FooterLinks   []Link
-	BaseURL       string
-	AppSecret     string
-	PostmarkToken string
-	EmailFrom     string
-	TrustProxy    bool
+	Account       Account
+	GoogleEnabled bool
+}
+
+// Config holds the product configuration. ProjectName is the per-clone seam.
+type Config struct {
+	ProjectName        string
+	SiteName           string
+	SiteURL            string
+	Description        string
+	Addr               string
+	Debug              bool
+	DBPath             string
+	AssetVersion       string
+	Tokens             ui.Tokens
+	HeaderLinks        []Link
+	FooterLinks        []Link
+	BaseURL            string
+	AppSecret          string
+	PostmarkToken      string
+	EmailFrom          string
+	TrustProxy         bool
+	GoogleClientID     string
+	GoogleClientSecret string
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -91,6 +94,8 @@ func New(buildEnv, buildHash string) Config {
 	c.PostmarkToken = os.Getenv("POSTMARK_TOKEN")
 	c.EmailFrom = cmpOr(os.Getenv("EMAIL_FROM"), "noreply@localhost")
 	c.TrustProxy = isTruthy(os.Getenv("TRUST_PROXY"))
+	c.GoogleClientID = os.Getenv("GOOGLE_CLIENT_ID")
+	c.GoogleClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
 	return c
 }
 
@@ -123,11 +128,12 @@ func DBPath(projectName string, debug bool) string {
 // PageData returns the view-facing subset of the config.
 func (c Config) PageData() PageData {
 	return PageData{
-		SiteName:     c.SiteName,
-		AssetVersion: c.AssetVersion,
-		Tokens:       c.Tokens,
-		HeaderLinks:  c.HeaderLinks,
-		FooterLinks:  c.FooterLinks,
+		SiteName:      c.SiteName,
+		AssetVersion:  c.AssetVersion,
+		Tokens:        c.Tokens,
+		HeaderLinks:   c.HeaderLinks,
+		FooterLinks:   c.FooterLinks,
+		GoogleEnabled: c.GoogleEnabled(),
 	}
 }
 
@@ -178,6 +184,11 @@ func isTruthy(v string) bool {
 		return true
 	}
 	return false
+}
+
+// GoogleEnabled reports whether Google OAuth login is configured.
+func (c Config) GoogleEnabled() bool {
+	return c.GoogleClientID != "" && c.GoogleClientSecret != ""
 }
 
 // NewMeta builds per-page metadata, defaulting title/description from the config.
