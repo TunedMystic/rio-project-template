@@ -22,6 +22,26 @@ type Link struct {
 	Href string
 }
 
+// ProductKind distinguishes a recurring subscription from a one-time purchase.
+type ProductKind int
+
+const (
+	Subscription ProductKind = iota
+	OneTime
+)
+
+// Product is a sellable item in the catalog. PriceID comes from env; an empty
+// PriceID means the product is not available (button hidden).
+type Product struct {
+	Key     string // stable id used in URLs/entitlements, e.g. "pro", "ebook"
+	Name    string
+	Kind    ProductKind
+	PriceID string
+}
+
+// Available reports whether the product has a configured Stripe price.
+func (p Product) Available() bool { return p.PriceID != "" }
+
 // Meta is per-page metadata for the document head.
 type Meta struct {
 	Title       string
@@ -43,24 +63,27 @@ type PageData struct {
 
 // Config holds the product configuration. ProjectName is the per-clone seam.
 type Config struct {
-	ProjectName        string
-	SiteName           string
-	SiteURL            string
-	Description        string
-	Addr               string
-	Debug              bool
-	DBPath             string
-	AssetVersion       string
-	Tokens             ui.Tokens
-	HeaderLinks        []Link
-	FooterLinks        []Link
-	BaseURL            string
-	AppSecret          string
-	PostmarkToken      string
-	EmailFrom          string
-	TrustProxy         bool
-	GoogleClientID     string
-	GoogleClientSecret string
+	ProjectName         string
+	SiteName            string
+	SiteURL             string
+	Description         string
+	Addr                string
+	Debug               bool
+	DBPath              string
+	AssetVersion        string
+	Tokens              ui.Tokens
+	HeaderLinks         []Link
+	FooterLinks         []Link
+	BaseURL             string
+	AppSecret           string
+	PostmarkToken       string
+	EmailFrom           string
+	TrustProxy          bool
+	GoogleClientID      string
+	GoogleClientSecret  string
+	StripeSecretKey     string
+	StripeWebhookSecret string
+	Products            []Product
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -96,6 +119,14 @@ func New(buildEnv, buildHash string) Config {
 	c.TrustProxy = isTruthy(os.Getenv("TRUST_PROXY"))
 	c.GoogleClientID = os.Getenv("GOOGLE_CLIENT_ID")
 	c.GoogleClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	c.StripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
+	c.StripeWebhookSecret = os.Getenv("STRIPE_WEBHOOK_SECRET")
+	// Product catalog — the per-clone seam. Edit this list per product; each
+	// price id comes from env so the same binary works across environments.
+	c.Products = []Product{
+		{Key: "pro", Name: "Pro", Kind: Subscription, PriceID: os.Getenv("STRIPE_PRICE_PRO")},
+		{Key: "ebook", Name: "E-book", Kind: OneTime, PriceID: os.Getenv("STRIPE_PRICE_EBOOK")},
+	}
 	return c
 }
 
@@ -203,6 +234,19 @@ func (c Config) NewMeta(pageURL, heading string) Meta {
 		Heading:     heading,
 		PageURL:     pageURL,
 	}
+}
+
+// StripeEnabled reports whether billing is configured.
+func (c Config) StripeEnabled() bool { return c.StripeSecretKey != "" }
+
+// ProductByKey finds a catalog product by its key.
+func (c Config) ProductByKey(key string) (Product, bool) {
+	for _, p := range c.Products {
+		if p.Key == key {
+			return p, true
+		}
+	}
+	return Product{}, false
 }
 
 // defaultTokens is the starter brand. Products edit this literal.

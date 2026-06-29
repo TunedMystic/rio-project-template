@@ -103,10 +103,27 @@ func HandleRevokeAllSessions(store *database.Store) http.Handler {
 	return rio.MakeHandler(fn)
 }
 
-func HandleBilling() http.Handler {
+func HandleBilling(store *database.Store) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
+		user, _ := auth.UserFrom(r.Context())
+		owned := map[string]bool{}
+		keys, err := store.ListEntitlements(r.Context(), user.ID)
+		if err != nil {
+			return err
+		}
+		for _, k := range keys {
+			owned[k] = true
+		}
+		bv := views.BillingView{
+			StripeEnabled: Conf.StripeEnabled(),
+			Products:      Conf.Products,
+			Status:        user.SubscriptionStatus,
+			PeriodEnd:     user.CurrentPeriodEnd,
+			Owned:         owned,
+			HasCustomer:   user.StripeCustomerID != "",
+		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Billing")
-		return render(w, http.StatusOK, views.Billing(Conf.PageDataFor(account(r)), meta, accountView(r, "billing")))
+		return render(w, http.StatusOK, views.Billing(Conf.PageDataFor(account(r)), meta, accountView(r, "billing"), bv))
 	}
 	return rio.MakeHandler(fn)
 }

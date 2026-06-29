@@ -68,3 +68,41 @@ func RequireUser(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// HasActiveSubscription reports whether the user's subscription grants access.
+func HasActiveSubscription(u database.User) bool {
+	return u.SubscriptionStatus == "active" || u.SubscriptionStatus == "trialing"
+}
+
+// RequireSubscription gates a handler to users with an active subscription,
+// redirecting others to the billing page.
+func RequireSubscription(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		u, ok := UserFrom(r.Context())
+		if !ok || !HasActiveSubscription(u) {
+			http.Redirect(w, r, "/account/billing", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RequireEntitlement gates a handler to users who own productKey, redirecting
+// others to the billing page.
+func RequireEntitlement(store *database.Store, productKey string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			u, ok := UserFrom(r.Context())
+			if !ok {
+				http.Redirect(w, r, "/account/billing", http.StatusSeeOther)
+				return
+			}
+			has, err := store.HasEntitlement(r.Context(), u.ID, productKey)
+			if err != nil || !has {
+				http.Redirect(w, r, "/account/billing", http.StatusSeeOther)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}

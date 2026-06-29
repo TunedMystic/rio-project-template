@@ -2,6 +2,8 @@
 package views
 
 import (
+	"time"
+
 	"app/config"
 	"app/database"
 
@@ -201,19 +203,92 @@ func Security(pd config.PageData, meta config.Meta, av AccountView, sessions []d
 	return accountShell(pd, meta, av, card(body...), loginMethodsCard(pd, av, googleLinked))
 }
 
-func Billing(pd config.PageData, meta config.Meta, av AccountView) dom.Node {
+// BillingView is the billing tab's per-request data.
+type BillingView struct {
+	StripeEnabled bool
+	Products      []config.Product
+	Status        string // subscription_status
+	PeriodEnd     time.Time
+	Owned         map[string]bool
+	HasCustomer   bool // true when user.StripeCustomerID != ""
+}
+
+func Billing(pd config.PageData, meta config.Meta, av AccountView, bv BillingView) dom.Node {
+	if !bv.StripeEnabled {
+		return accountShell(pd, meta, av,
+			card(
+				ruledHeading("Billing"),
+				dom.P(dom.Class("mt-4 text-[var(--color-text-muted)]"), dom.Text("Billing is not configured.")),
+			),
+		)
+	}
+
+	rows := make([]dom.Node, 0, len(bv.Products))
+	for _, p := range bv.Products {
+		if !p.Available() {
+			continue
+		}
+		rows = append(rows, billingRow(av, p, bv))
+	}
+
 	return accountShell(pd, meta, av,
 		card(
 			ruledHeading("Billing"),
-			dom.P(dom.Class("mt-4 text-[var(--color-text-muted)]"), dom.Text("You're on the free plan.")),
-			dom.Div(dom.Class("mt-4"),
-				dom.Span(
-					dom.Class("inline-flex items-center rounded-[var(--radius-base)] border border-[var(--color-border)] px-4 py-2 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"),
-					dom.Text("Manage billing (coming soon)"),
-				),
-			),
+			dom.Div(withClass("mt-2", rows)...),
 		),
 	)
+}
+
+// billingRow renders one product with the right action for its kind/state.
+func billingRow(av AccountView, p config.Product, bv BillingView) dom.Node {
+	var right dom.Node
+	switch {
+	case p.Kind == config.Subscription && bv.HasCustomer:
+		// User already has (or had) a Stripe customer: route to portal to manage or fix.
+		right = billingForm("/account/billing/portal", av.CSRF, "", "Manage billing")
+	case p.Kind == config.Subscription:
+		right = billingForm("/account/billing/checkout", av.CSRF, p.Key, "Subscribe")
+	case bv.Owned[p.Key]:
+		right = dom.Span(
+			dom.Class("inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[length:var(--font-size-sm)] font-medium ring-1 ring-inset bg-[var(--color-success)]/12 text-[var(--color-success)] ring-[var(--color-success)]/25"),
+			dom.Text("Owned"))
+	default:
+		right = billingForm("/account/billing/checkout", av.CSRF, p.Key, "Buy")
+	}
+
+	sub := "One-time purchase"
+	if p.Kind == config.Subscription {
+		if bv.Status == "active" || bv.Status == "trialing" {
+			sub = "Active"
+		} else {
+			sub = "Subscription"
+		}
+	}
+	return dom.Div(
+		dom.Class("flex items-center justify-between gap-4 border-b border-[var(--color-border)] py-4 last:border-0"),
+		dom.Div(dom.Class("min-w-0"),
+			dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text(p.Name)),
+			dom.P(dom.Class("mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text(sub)),
+		),
+		right,
+	)
+}
+
+// billingForm is a small POST form with the CSRF token and an optional product key.
+func billingForm(action, csrf, productKey, label string) dom.Node {
+	children := []dom.Node{
+		dom.Method("post"),
+		dom.Action(action),
+		csrfInput(csrf),
+	}
+	if productKey != "" {
+		children = append(children, dom.Input(dom.Type("hidden"), dom.Name("product"), dom.Value(productKey)))
+	}
+	children = append(children,
+		dom.Button(dom.Type("submit"),
+			dom.Class("shrink-0 inline-flex items-center justify-center rounded-[var(--radius-base)] px-4 py-2 text-[length:var(--font-size-sm)] font-semibold bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-sm transition hover:shadow-md hover:brightness-105 cursor-pointer"),
+			dom.Text(label)))
+	return dom.Form(children...)
 }
 
 func Danger(pd config.PageData, meta config.Meta, av AccountView, email string) dom.Node {
