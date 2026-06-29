@@ -129,3 +129,17 @@ func TestSecurity_ShowsLoginMethods(t *testing.T) {
 		t.Error("unlinked account should show a Google connect link")
 	}
 }
+
+func TestBilling_NotConfigured(t *testing.T) {
+	pd := testPageData()
+	av := AccountView{Active: "billing", CSRF: "c"}
+	var b bytes.Buffer
+	_ = Billing(pd, config.Meta{Title: "Billing"}, av, BillingView{StripeEnabled: false}).Render(&b)
+	html := b.String()
+	if !strings.Contains(html, "Billing is not configured") {
+		t.Error("disabled billing should show the not-configured message")
+	}
+	if strings.Contains(html, `/account/billing/checkout`) || strings.Contains(html, `/account/billing/portal`) {
+		t.Error("disabled billing must not render checkout/portal forms")
+	}
+}
