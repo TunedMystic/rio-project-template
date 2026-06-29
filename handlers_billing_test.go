@@ -5,12 +5,14 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strconv"
 	"testing"
 
 	"app/auth"
 	"app/billing"
 	"app/config"
+	"app/database"
 )
 
 func TestHandleCheckout_SubscriptionProduct(t *testing.T) {
@@ -132,3 +134,69 @@ func TestHandleStripeWebhook_BadSignature(t *testing.T) {
 // underlying DB, which would also break the FakeClient setup.  The behaviour
 // is covered by the handler code change (rio.LogError + return err → 500).
 func itoaTest(n int64) string { return strconv.FormatInt(n, 10) }
+
+// A duplicate (already-recorded) event id is skipped without re-applying.
+// Proof: the event targets a non-existent user, so if the handler attempted the
+// grant it would hit a foreign-key error and return 500. A 200 proves it skipped.
+func TestHandleStripeWebhook_SkipsAlreadyProcessed(t *testing.T) {
+	store := authTestStore(t)
+	if err := store.RecordEvent(context.Background(), "evt_dup"); err != nil {
+		t.Fatalf("RecordEvent: %v", err)
+	}
+	fake := &billing.FakeClient{NextEvent: billing.Event{
+		ID: "evt_dup", Type: "checkout.session.completed",
+		ProductKey: "ebook", UserID: "999999", // user does not exist
+	}}
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (skipped, no apply attempted)", rec.Code)
+	}
+}
+
+// A fresh event is applied, then its id is recorded.
+func TestHandleStripeWebhook_RecordsAfterApply(t *testing.T) {
+	store := authTestStore(t)
+	u, _ := store.CreateUser(context.Background(), "wid@example.com", "W")
+	fake := &billing.FakeClient{NextEvent: billing.Event{
+		ID: "evt_new", Type: "checkout.session.completed",
+		ProductKey: "ebook", UserID: itoaTest(u.ID),
+	}}
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if has, _ := store.HasEntitlement(context.Background(), u.ID, "ebook"); !has {
+		t.Error("entitlement not granted on first delivery")
+	}
+	if done, _ := store.IsEventProcessed(context.Background(), "evt_new"); !done {
+		t.Error("event id not recorded after a successful apply")
+	}
+}
+
+// A store failure (closed DB) makes the handler return 500 so Stripe retries.
+func TestHandleStripeWebhook_StoreError500(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "we.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := database.MigrateUp(db); err != nil {
+		t.Fatal(err)
+	}
+	store := database.NewStore(db)
+	db.Close() // force every store call to fail
+
+	fake := &billing.FakeClient{NextEvent: billing.Event{
+		ID: "evt_err", Type: "checkout.session.completed", ProductKey: "ebook", UserID: "1",
+	}}
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500", rec.Code)
+	}
+}

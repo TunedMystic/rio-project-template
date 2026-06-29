@@ -86,6 +86,21 @@ func HandleStripeWebhook(store *database.Store, bc billing.Client) http.Handler 
 			return nil
 		}
 
+		// Idempotency: skip an event we've already fully processed. Stripe may
+		// re-deliver an event even after a 200. Check before applying; record
+		// only after a successful apply (so a failed apply is retried, not lost).
+		if event.ID != "" {
+			done, err := store.IsEventProcessed(r.Context(), event.ID)
+			if err != nil {
+				rio.LogError(err)
+				return err
+			}
+			if done {
+				w.WriteHeader(http.StatusOK)
+				return nil
+			}
+		}
+
 		switch event.Type {
 		case "checkout.session.completed":
 			uid, _ := strconv.ParseInt(event.UserID, 10, 64)
@@ -111,6 +126,12 @@ func HandleStripeWebhook(store *database.Store, bc billing.Client) http.Handler 
 					rio.LogError(err)
 					return err
 				}
+			}
+		}
+		if event.ID != "" {
+			if err := store.RecordEvent(r.Context(), event.ID); err != nil {
+				rio.LogError(err)
+				return err
 			}
 		}
 		w.WriteHeader(http.StatusOK)
