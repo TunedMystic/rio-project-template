@@ -70,3 +70,37 @@ func TestAddrFromEnv(t *testing.T) {
 		}
 	})
 }
+
+func TestNew_LoadsAuthEnv(t *testing.T) {
+	t.Setenv("BASE_URL", "https://app.example.com")
+	t.Setenv("APP_SECRET", "supersecret")
+	t.Setenv("POSTMARK_TOKEN", "pm-tok")
+	t.Setenv("EMAIL_FROM", "noreply@example.com")
+
+	c := New("production", "h")
+	if c.BaseURL != "https://app.example.com" {
+		t.Errorf("BaseURL = %q", c.BaseURL)
+	}
+	if c.AppSecret != "supersecret" || c.PostmarkToken != "pm-tok" || c.EmailFrom != "noreply@example.com" {
+		t.Errorf("auth env not loaded: %+v", c)
+	}
+}
+
+func TestPageDataFor_CarriesAccount(t *testing.T) {
+	c := New("debug", "h")
+	pd := c.PageDataFor(Account{LoggedIn: true, Name: "Sam", Email: "sam@example.com"})
+	if !pd.Account.LoggedIn || pd.Account.Email != "sam@example.com" {
+		t.Errorf("account not carried: %+v", pd.Account)
+	}
+}
+
+func TestAppSecret_DevDefaults(t *testing.T) {
+	t.Setenv("APP_SECRET", "")
+	if got := appSecretFromEnv(true); got == "" {
+		t.Error("dev APP_SECRET should fall back to a default")
+	}
+	t.Setenv("APP_SECRET", "")
+	if got := appSecretFromEnv(false); got != "" {
+		t.Error("prod APP_SECRET should stay empty when unset (caller fails fast)")
+	}
+}

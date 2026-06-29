@@ -1,11 +1,20 @@
 package config
 
 import (
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tunedmystic/rio/ui"
 )
+
+// Account is the current-user info the nav needs (empty when logged out).
+type Account struct {
+	LoggedIn bool
+	Name     string
+	Email    string
+}
 
 // Link is an anchor link used in nav/footer.
 type Link struct {
@@ -28,21 +37,26 @@ type PageData struct {
 	Tokens       ui.Tokens
 	HeaderLinks  []Link
 	FooterLinks  []Link
+	Account      Account
 }
 
 // Config holds the product configuration. ProjectName is the per-clone seam.
 type Config struct {
-	ProjectName  string
-	SiteName     string
-	SiteURL      string
-	Description  string
-	Addr         string
-	Debug        bool
-	DBPath       string
-	AssetVersion string
-	Tokens       ui.Tokens
-	HeaderLinks  []Link
-	FooterLinks  []Link
+	ProjectName   string
+	SiteName      string
+	SiteURL       string
+	Description   string
+	Addr          string
+	Debug         bool
+	DBPath        string
+	AssetVersion  string
+	Tokens        ui.Tokens
+	HeaderLinks   []Link
+	FooterLinks   []Link
+	BaseURL       string
+	AppSecret     string
+	PostmarkToken string
+	EmailFrom     string
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -71,6 +85,10 @@ func New(buildEnv, buildHash string) Config {
 		},
 	}
 	c.DBPath = DBPath(c.ProjectName, debug)
+	c.BaseURL = baseURLFromEnv(c.Addr)
+	c.AppSecret = appSecretFromEnv(debug)
+	c.PostmarkToken = os.Getenv("POSTMARK_TOKEN")
+	c.EmailFrom = cmpOr(os.Getenv("EMAIL_FROM"), "noreply@localhost")
 	return c
 }
 
@@ -111,6 +129,46 @@ func (c Config) PageData() PageData {
 	}
 }
 
+// PageDataFor returns view data including the current-user account info.
+func (c Config) PageDataFor(a Account) PageData {
+	pd := c.PageData()
+	pd.Account = a
+	return pd
+}
+
+// baseURLFromEnv resolves the absolute base URL for links. BASE_URL wins; else
+// http://localhost<addr-port> for dev convenience.
+func baseURLFromEnv(addr string) string {
+	if v := os.Getenv("BASE_URL"); v != "" {
+		return v
+	}
+	port := strings.TrimPrefix(addr, ":")
+	if i := strings.LastIndex(addr, ":"); i >= 0 {
+		port = addr[i+1:]
+	}
+	return "http://localhost:" + port
+}
+
+// appSecretFromEnv returns APP_SECRET. In dev it falls back to a known default
+// (with a warning); in prod it returns "" so the caller can fail fast.
+func appSecretFromEnv(debug bool) string {
+	if v := os.Getenv("APP_SECRET"); v != "" {
+		return v
+	}
+	if debug {
+		log.Println("WARNING: APP_SECRET unset; using an insecure dev default")
+		return "dev-only-insecure-secret-change-me"
+	}
+	return ""
+}
+
+func cmpOr(v, fallback string) string {
+	if v != "" {
+		return v
+	}
+	return fallback
+}
+
 // NewMeta builds per-page metadata, defaulting title/description from the config.
 func (c Config) NewMeta(pageURL, heading string) Meta {
 	title := c.SiteName
@@ -128,12 +186,12 @@ func (c Config) NewMeta(pageURL, heading string) Meta {
 // defaultTokens is the starter brand. Products edit this literal.
 func defaultTokens() ui.Tokens {
 	return ui.Tokens{
-		FontFamily:        `"Inter", ui-sans-serif, system-ui, sans-serif`,
-		FontSizeSm:        "16px",
-		FontSizeBase:      "18px",
-		FontSizeLg:        "20px",
-		FontSizeXl:        "24px",
-		FontSize2xl:       "30px",
+		FontFamily:   `"Inter", ui-sans-serif, system-ui, sans-serif`,
+		FontSizeSm:   "16px",
+		FontSizeBase: "18px",
+		FontSizeLg:   "20px",
+		FontSizeXl:   "24px",
+		FontSize2xl:  "30px",
 		// A calm, warm palette: a single deep-teal accent on warm-stone
 		// neutrals, white cards floating on a soft cream canvas. Edit these
 		// to rebrand the whole app — every component reads these variables.
