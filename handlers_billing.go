@@ -2,7 +2,9 @@
 package main
 
 import (
+	"io"
 	"net/http"
+	"strconv"
 
 	"app/auth"
 	"app/billing"
@@ -65,6 +67,43 @@ func HandlePortal(store *database.Store, bc billing.Client) http.Handler {
 			return err
 		}
 		http.Redirect(w, r, url, http.StatusSeeOther)
+		return nil
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleStripeWebhook(store *database.Store, bc billing.Client) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		payload, err := io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		}
+		event, err := bc.VerifyWebhook(payload, r.Header.Get("Stripe-Signature"), Conf.StripeWebhookSecret)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		}
+
+		switch event.Type {
+		case "checkout.session.completed":
+			uid, _ := strconv.ParseInt(event.UserID, 10, 64)
+			product, ok := Conf.ProductByKey(event.ProductKey)
+			if ok && product.Kind == config.OneTime {
+				if uid != 0 {
+					_ = store.GrantEntitlement(r.Context(), uid, event.ProductKey)
+				}
+			} else if uid != 0 && event.CustomerID != "" {
+				// Subscription checkout: ensure the customer is linked (status
+				// itself arrives via customer.subscription.updated).
+				_ = store.SetStripeCustomerID(r.Context(), uid, event.CustomerID)
+			}
+		case "customer.subscription.updated", "customer.subscription.deleted":
+			if event.CustomerID != "" {
+				_ = store.UpdateSubscription(r.Context(), event.CustomerID, event.Status, event.CurrentPeriodEnd)
+			}
+		}
+		w.WriteHeader(http.StatusOK)
 		return nil
 	}
 	return rio.MakeHandler(fn)

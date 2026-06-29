@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"app/auth"
@@ -73,3 +74,56 @@ func useConf(t *testing.T) {
 	Conf = config.New("debug", "test")
 	t.Cleanup(func() { Conf = old })
 }
+
+func TestHandleStripeWebhook_GrantsEntitlement(t *testing.T) {
+	t.Setenv("STRIPE_PRICE_EBOOK", "price_ebook")
+	useConf(t)
+	store := authTestStore(t)
+	u, _ := store.CreateUser(context.Background(), "w@example.com", "W")
+
+	fake := &billing.FakeClient{NextEvent: billing.Event{
+		Type: "checkout.session.completed", CustomerID: "cus_w",
+		UserID: itoaTest(u.ID), ProductKey: "ebook",
+	}}
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if has, _ := store.HasEntitlement(context.Background(), u.ID, "ebook"); !has {
+		t.Error("entitlement not granted from checkout.session.completed")
+	}
+}
+
+func TestHandleStripeWebhook_UpdatesSubscription(t *testing.T) {
+	store := authTestStore(t)
+	u, _ := store.CreateUser(context.Background(), "s@example.com", "S")
+	_ = store.SetStripeCustomerID(context.Background(), u.ID, "cus_s")
+
+	fake := &billing.FakeClient{NextEvent: billing.Event{
+		Type: "customer.subscription.updated", CustomerID: "cus_s", Status: "active",
+	}}
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+
+	got, _ := store.UserByID(context.Background(), u.ID)
+	if got.SubscriptionStatus != "active" {
+		t.Errorf("status = %q, want active", got.SubscriptionStatus)
+	}
+}
+
+func TestHandleStripeWebhook_BadSignature(t *testing.T) {
+	store := authTestStore(t)
+	fake := &billing.FakeClient{NextWebhookErr: http.ErrBodyNotAllowed} // any non-nil error
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/stripe", nil)
+	rec := httptest.NewRecorder()
+	HandleStripeWebhook(store, fake).ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func itoaTest(n int64) string { return strconv.FormatInt(n, 10) }

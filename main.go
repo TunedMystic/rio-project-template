@@ -91,6 +91,7 @@ func run() error {
 		bc := billing.New(Conf.StripeSecretKey)
 		s.Handle("/account/billing/checkout", auth.RequireUser(HandleCheckout(store, bc)))
 		s.Handle("/account/billing/portal", auth.RequireUser(HandlePortal(store, bc)))
+		s.Handle("/webhooks/stripe", HandleStripeWebhook(store, bc))
 	}
 
 	s.Handle("/static/", HandleStatic())
