@@ -77,6 +77,13 @@ func run() error {
 	s.Handle("/auth/verify", HandleVerify(store))
 	s.Handle("/logout", HandleLogout(store))
 
+	// Google OAuth (optional: only when configured)
+	if Conf.GoogleEnabled() {
+		goauth := auth.NewGoogleOAuth(Conf.GoogleClientID, Conf.GoogleClientSecret, Conf.BaseURL+"/auth/google/callback")
+		s.Handle("/auth/google/login", HandleGoogleLogin(goauth))
+		s.Handle("/auth/google/callback", HandleGoogleCallback(store, goauth))
+	}
+
 	// Account (authenticated)
 	s.Handle("/account", auth.RequireUser(HandleAccount(store)))
 	s.Handle("/account/security", auth.RequireUser(HandleSecurity(store)))
