@@ -1,3 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Scan the product's Go source and the vendored rio/ui source so the
+   bg-[var(--...)] component class literals are emitted. */
+@source "./**/*.go";
+@source "./vendor/github.com/tunedmystic/rio/ui/**/*.go";

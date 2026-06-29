@@ -1,8 +1,11 @@
-# Binaries for programs and plugins
+# Binaries
 bin/
 
-# Files
-*.sqlite*
+# Database
+*.db
+*.db-shm
+*.db-wal
+/data/
 
 # Directories
 .notes/

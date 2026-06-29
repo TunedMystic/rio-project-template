@@ -15,14 +15,26 @@ run: bin/watchexec bin/cwebp
 ## @(app) - 📦 Build the app binary
 build: clean tailwind
 	@echo "✨📦✨ Building the app binary\n"
-	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)'" -o bin/app ./...
+	@go build -ldflags="-s -w -X 'main.BuildHash=$$(git rev-parse --short=10 HEAD)' -X 'main.BuildDate=$$(date)'" -o bin/app .
 
 
-## @(app) - 🚀 Deploy the app with Fly.io
-deploy: clean tailwind
-	@echo "\n"
-	@echo "✨🚀✨ Deploying application\n"
-	@fly deploy --no-cache --build-arg BUILD_HASH="$$(git rev-parse --short=10 HEAD)"
+## @(app) - 🧪 Run the tests
+test:
+	@echo "✨🧪✨ Running tests\n"
+	@go test ./...
+
+
+## @(app) - 🔎 Vet and test (what CI runs)
+check:
+	@echo "✨🔎✨ Vetting and testing\n"
+	@go vet ./...
+	@go test ./...
+
+
+## @(app) - 🗑️ Delete the local dev database
+db-reset:
+	@echo "✨🗑️✨ Removing local database\n"
+	@rm -f ./*.db ./*.db-shm ./*.db-wal
 
 
 ## @(app) - ✨ Remove temp files and dirs
@@ -74,14 +86,16 @@ wipeall: wipe
 # Helper commands
 # -------------------------------------------------------------------
 
+## @(app) - 📦 Build the CSS with Tailwind v4
 tailwind: bin/tailwind
 	@echo "✨📦✨ Running tailwind\n"
+	@go mod vendor
 	@bash -c "./bin/tailwind --input ./tailwind.input.css --output ./static/css/styles.css --minify $(args)"
 
 
 bin/tailwind:
-	@echo "✨📦✨ Downloading tailwindcss binary\n"
-	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
+	@echo "✨📦✨ Downloading tailwindcss v4 binary\n"
+	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.1/tailwindcss-macos-arm64
 	chmod +x tailwindcss-macos-arm64
 	mkdir -p bin
 	mv tailwindcss-macos-arm64 ./bin/tailwind

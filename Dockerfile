@@ -4,7 +4,7 @@
 # and compressing the app binary.
 # ----------------------------------------------------
 
-FROM golang:1.22.1-alpine3.19 as builder
+FROM golang:1.26-alpine AS builder
 
 ENV GO111MODULE=on \
     GOOS=linux \
@@ -17,7 +17,9 @@ WORKDIR /build
 RUN apk add --no-cache upx
 
 COPY . .
-RUN go build -ldflags="-s -w -X 'main.BuildHash=$BUILD_HASH' -X 'main.BuildDate=$(date)'" -o app ./...
+RUN go build -mod=vendor \
+    -ldflags="-s -w -X 'main.BuildHash=$BUILD_HASH' -X 'main.BuildDate=$(date)'" \
+    -o app .
 RUN upx /build/app
 
 
@@ -26,12 +28,17 @@ RUN upx /build/app
 # into a minimal image.
 # ----------------------------------------------------
 
-FROM scratch as final
+FROM scratch AS final
 
 WORKDIR /x
 
 COPY --from=builder /build/app .
 
+# SQLite database directory (mount a volume here to persist:
+#   docker run -v ./data:/data ...). DB file is /data/<ProjectName>.db.
+ENV DB_DIR=/data
+# Auth/email (set at runtime): APP_SECRET (required in prod), BASE_URL,
+# POSTMARK_TOKEN, EMAIL_FROM.
 EXPOSE 3000
 
 CMD ["/x/app"]
