@@ -38,7 +38,7 @@ COPY --from=builder /build/app .
 #   docker run -v ./data:/data ...). DB file is /data/<ProjectName>.db.
 ENV DB_DIR=/data
 # Auth/email (set at runtime): APP_SECRET (required in prod), BASE_URL,
-# POSTMARK_TOKEN, EMAIL_FROM.
+# POSTMARK_TOKEN, EMAIL_FROM, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 EXPOSE 3000
 
 CMD ["/x/app"]
