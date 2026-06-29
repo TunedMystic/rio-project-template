@@ -37,6 +37,8 @@ COPY --from=builder /build/app .
 # SQLite database directory (mount a volume here to persist:
 #   docker run -v ./data:/data ...). DB file is /data/<ProjectName>.db.
 ENV DB_DIR=/data
+# Auth/email (set at runtime): APP_SECRET (required in prod), BASE_URL,
+# POSTMARK_TOKEN, EMAIL_FROM.
 EXPOSE 3000
 
 CMD ["/x/app"]
