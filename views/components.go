@@ -12,21 +12,37 @@ import (
 // navbar is the top bar: a monogram + site name on the left, links on the
 // right. Links stay quiet (muted) until hovered, when they pick up the accent.
 func navbar(pd config.PageData) dom.Node {
-	links := make([]dom.Node, 0, len(pd.HeaderLinks)+1)
-	links = append(links, dom.Class("flex items-center gap-7"))
+	links := make([]dom.Node, 0, len(pd.HeaderLinks)+2)
+	links = append(links, dom.Class("flex items-center gap-6"))
 	for _, l := range pd.HeaderLinks {
 		links = append(links, navLink(l))
 	}
+	if pd.Account.LoggedIn {
+		links = append(links, accountAvatar(pd.Account))
+	} else {
+		links = append(links, navLink(config.Link{Text: "Log in", Href: "/login"}))
+	}
 	return dom.Header(
-		// The page canvas is near-white; the warmth lives here in the header
-		// band. This cream is the one intentionally hardcoded color — edit it
-		// (or swap for bg-[var(--color-background)]) to taste.
 		dom.Class("border-b border-[var(--color-border)] bg-[#f8f5ee]"),
 		dom.Div(
 			dom.Class("mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-4"),
 			brand(pd),
 			dom.Nav(links...),
 		),
+	)
+}
+
+// accountAvatar links to the account area with a monogram of the user.
+func accountAvatar(a config.Account) dom.Node {
+	label := a.Email
+	if a.Name != "" {
+		label = a.Name
+	}
+	return dom.A(
+		dom.Class("flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] text-[length:var(--font-size-sm)] font-bold"),
+		dom.Href("/account"),
+		dom.Title(label),
+		dom.Text(initial(label)),
 	)
 }
 
