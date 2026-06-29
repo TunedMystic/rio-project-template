@@ -83,7 +83,7 @@ func run() error {
 	s.Handle("/account/security", auth.RequireUser(HandleSecurity(store)))
 	s.Handle("/account/sessions/revoke", auth.RequireUser(HandleRevokeSession(store)))
 	s.Handle("/account/sessions/revoke-all", auth.RequireUser(HandleRevokeAllSessions(store)))
-	s.Handle("/account/billing", auth.RequireUser(HandleBilling()))
+	s.Handle("/account/billing", auth.RequireUser(HandleBilling(store)))
 	s.Handle("/account/delete", auth.RequireUser(HandleDeleteAccount(store)))
 
 	// Billing (optional: only when Stripe is configured)
