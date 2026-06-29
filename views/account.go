@@ -14,6 +14,7 @@ type AccountView struct {
 	Active string // "profile" | "security" | "billing" | "danger"
 	CSRF   string
 	Flash  string
+	Error  string
 }
 
 type accountTab struct{ key, label, href string }
@@ -40,6 +41,9 @@ func accountShell(pd config.PageData, meta config.Meta, av AccountView, body ...
 	content := make([]dom.Node, 0, len(body)+2)
 	if av.Flash != "" {
 		content = append(content, ui.Alert(ui.AlertSuccess, dom.Text(av.Flash)))
+	}
+	if av.Error != "" {
+		content = append(content, ui.Alert(ui.AlertError, dom.Text(av.Error)))
 	}
 	content = append(content, dom.Nav(tabs...))
 	content = append(content, body...)
@@ -83,7 +87,58 @@ func deviceBadge(label string) dom.Node {
 	)
 }
 
-func Security(pd config.PageData, meta config.Meta, av AccountView, sessions []database.Session, currentID string) dom.Node {
+// loginMethodsCard shows the account's sign-in methods with Google
+// connect/disconnect controls.
+func loginMethodsCard(pd config.PageData, av AccountView, googleLinked bool) dom.Node {
+	googleRow := dom.Node(dom.Text(""))
+	switch {
+	case googleLinked:
+		googleRow = dom.Div(
+			dom.Class("flex items-center justify-between border-b border-[var(--color-border)] py-4 last:border-0"),
+			dom.Div(dom.Class("min-w-0"),
+				dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text("Google")),
+				dom.P(dom.Class("mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text("Connected")),
+			),
+			dom.Form(
+				dom.Method("post"),
+				dom.Action("/account/google/disconnect"),
+				csrfInput(av.CSRF),
+				dom.Button(dom.Type("submit"),
+					dom.Class("shrink-0 rounded-[var(--radius-base)] border border-[var(--color-border)] px-3 py-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] cursor-pointer"),
+					dom.Text("Disconnect")),
+			),
+		)
+	case pd.GoogleEnabled:
+		googleRow = dom.Div(
+			dom.Class("flex items-center justify-between border-b border-[var(--color-border)] py-4 last:border-0"),
+			dom.Div(dom.Class("min-w-0"),
+				dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text("Google")),
+				dom.P(dom.Class("mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text("Not connected")),
+			),
+			dom.A(
+				dom.Class("shrink-0 rounded-[var(--radius-base)] border border-[var(--color-border)] px-3 py-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] cursor-pointer"),
+				dom.Href("/auth/google/login?mode=link"),
+				dom.Text("Connect")),
+		)
+	}
+
+	return card(
+		ruledHeading("Login methods"),
+		dom.Div(
+			dom.Class("mt-2"),
+			dom.Div(
+				dom.Class("flex items-center justify-between border-b border-[var(--color-border)] py-4"),
+				dom.Div(dom.Class("min-w-0"),
+					dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text("Email magic link")),
+					dom.P(dom.Class("mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text("Always available")),
+				),
+			),
+			googleRow,
+		),
+	)
+}
+
+func Security(pd config.PageData, meta config.Meta, av AccountView, sessions []database.Session, currentID string, googleLinked bool) dom.Node {
 	rows := make([]dom.Node, 0, len(sessions))
 	for _, s := range sessions {
 		location := s.IP
@@ -143,7 +198,7 @@ func Security(pd config.PageData, meta config.Meta, av AccountView, sessions []d
 		)
 	}
 
-	return accountShell(pd, meta, av, card(body...))
+	return accountShell(pd, meta, av, card(body...), loginMethodsCard(pd, av, googleLinked))
 }
 
 func Billing(pd config.PageData, meta config.Meta, av AccountView) dom.Node {
