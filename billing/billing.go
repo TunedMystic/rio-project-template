@@ -27,6 +27,7 @@ type CheckoutInput struct {
 
 // Event is a normalized Stripe webhook event (only the fields the app needs).
 type Event struct {
+	ID               string // Stripe event id (for idempotency/dedup)
 	Type             string
 	CustomerID       string
 	UserID           string // from checkout session metadata.user_id
@@ -126,7 +127,7 @@ func (c *StripeClient) VerifyWebhook(payload []byte, sigHeader, secret string) (
 	if err != nil {
 		return Event{}, err
 	}
-	out := Event{Type: string(ev.Type)}
+	out := Event{ID: ev.ID, Type: string(ev.Type)}
 	switch ev.Type {
 	case "checkout.session.completed":
 		var s stripe.CheckoutSession
