@@ -63,3 +63,15 @@ func TestRequireEntitlement(t *testing.T) {
 		t.Errorf("non-owner not redirected: %d", rec.Code)
 	}
 }
+
+func TestRequireSubscription_NoUser(t *testing.T) {
+	guard := RequireSubscription(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not run when no user is in context")
+	}))
+	rec := httptest.NewRecorder()
+	// A bare request with no user in context (LoadUser never ran).
+	guard.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/premium", nil))
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/account/billing" {
+		t.Errorf("no-user: got %d %q, want 303 /account/billing", rec.Code, rec.Header().Get("Location"))
+	}
+}

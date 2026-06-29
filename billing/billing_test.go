@@ -33,6 +33,9 @@ func TestVerifyWebhook_GoodAndBadSignature(t *testing.T) {
 	if ev.CurrentPeriodEnd.Unix() != 1893456000 {
 		t.Errorf("period end = %v", ev.CurrentPeriodEnd)
 	}
+	if ev.ID != "evt_1" {
+		t.Errorf("event ID = %q, want evt_1", ev.ID)
+	}
 
 	// A tampered/wrong signature is rejected.
 	if _, err := (&StripeClient{}).VerifyWebhook(payload, sig, "whsec_other"); err == nil {
