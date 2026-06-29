@@ -39,6 +39,8 @@ COPY --from=builder /build/app .
 ENV DB_DIR=/data
 # Auth/email (set at runtime): APP_SECRET (required in prod), BASE_URL,
 # POSTMARK_TOKEN, EMAIL_FROM.
+# Billing (set at runtime): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+# STRIPE_PRICE_PRO, STRIPE_PRICE_EBOOK.
 EXPOSE 3000
 
 CMD ["/x/app"]

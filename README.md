@@ -33,6 +33,25 @@ In dev with no `POSTMARK_TOKEN`, the magic link is printed to the server log —
 click it from your terminal. In production, set all four (`APP_SECRET` is
 mandatory; the app refuses to start without it).
 
+## Billing (Stripe)
+
+Subscriptions and one-time purchases via Stripe Checkout + Billing Portal. Config via env:
+
+| Env | Purpose | Default |
+|-----|---------|---------|
+| `STRIPE_SECRET_KEY` | Stripe secret key (enables billing) | unset → billing disabled |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret | unset → webhook rejects events |
+| `STRIPE_PRICE_PRO` | Price ID for the `pro` subscription | unset → Subscribe hidden |
+| `STRIPE_PRICE_EBOOK` | Price ID for the `ebook` one-time product | unset → Buy hidden |
+
+Edit the `Products` catalog in `config/config.go` to add/rename products (each is
+`{Key, Name, Kind, PriceID}`; `Kind` is `Subscription` or `OneTime`). Gating:
+`/premium` requires an active subscription; `/guide` requires owning `ebook`.
+
+**Local webhooks:** run `stripe listen --forward-to localhost:3000/webhooks/stripe`
+and put the printed `whsec_...` in `STRIPE_WEBHOOK_SECRET`. Use Stripe **test mode**
+keys/prices; the live consent round-trip can't be automated.
+
 ## Build & deploy
 
 - `make tailwind` builds CSS (Tailwind v4; scans vendored rio/ui).
