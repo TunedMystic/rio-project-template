@@ -2,6 +2,7 @@
 package main
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,11 +20,16 @@ import (
 
 const loginTokenTTL = 15 * time.Minute
 
-func clientIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return strings.TrimSpace(strings.Split(fwd, ",")[0])
+func clientIP(r *http.Request, trustProxy bool) string {
+	if trustProxy {
+		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+			return strings.TrimSpace(strings.Split(fwd, ",")[0])
+		}
 	}
-	host, _, _ := strings.Cut(r.RemoteAddr, ":")
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
 	return host
 }
 
@@ -47,7 +53,7 @@ func HandleLogin(store *database.Store, sender email.Sender, limiter *auth.Limit
 		}
 
 		// Rate-limit, then (best-effort) issue + send. Always show the same page.
-		if limiter.Allow(emailAddr + "|" + clientIP(r)) {
+		if limiter.Allow(emailAddr + "|" + clientIP(r, Conf.TrustProxy)) {
 			if token, hash, err := auth.GenerateToken(); err == nil {
 				if err := store.CreateToken(r.Context(), hash, emailAddr, time.Now().Add(loginTokenTTL)); err == nil {
 					link := Conf.BaseURL + "/auth/verify?token=" + token
@@ -102,7 +108,7 @@ func HandleVerify(store *database.Store) http.Handler {
 			return err
 		}
 		if err := store.CreateSession(r.Context(), sessHash, user.ID,
-			time.Now().Add(auth.SessionTTL), r.UserAgent(), clientIP(r)); err != nil {
+			time.Now().Add(auth.SessionTTL), r.UserAgent(), clientIP(r, Conf.TrustProxy)); err != nil {
 			return err
 		}
 		auth.SetSessionCookie(w, sessTok, !Conf.Debug)

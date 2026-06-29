@@ -27,6 +27,7 @@ Email magic-link login + a tabbed account area (`/account`). Config via env:
 | `BASE_URL` | Absolute base for magic-link URLs | `http://localhost:<port>` |
 | `POSTMARK_TOKEN` | Postmark server token | unset → links logged to console |
 | `EMAIL_FROM` | From address | `noreply@localhost` |
+| `TRUST_PROXY` | Honor X-Forwarded-For for client IP (set behind a trusted proxy) | unset → use the socket peer IP |
 
 In dev with no `POSTMARK_TOKEN`, the magic link is printed to the server log —
 click it from your terminal. In production, set all four (`APP_SECRET` is

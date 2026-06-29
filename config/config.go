@@ -57,6 +57,7 @@ type Config struct {
 	AppSecret     string
 	PostmarkToken string
 	EmailFrom     string
+	TrustProxy    bool
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -89,6 +90,7 @@ func New(buildEnv, buildHash string) Config {
 	c.AppSecret = appSecretFromEnv(debug)
 	c.PostmarkToken = os.Getenv("POSTMARK_TOKEN")
 	c.EmailFrom = cmpOr(os.Getenv("EMAIL_FROM"), "noreply@localhost")
+	c.TrustProxy = isTruthy(os.Getenv("TRUST_PROXY"))
 	return c
 }
 
@@ -167,6 +169,15 @@ func cmpOr(v, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// isTruthy returns true when v is "1", "true", or "yes" (case-insensitive).
+func isTruthy(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "1", "true", "yes":
+		return true
+	}
+	return false
 }
 
 // NewMeta builds per-page metadata, defaulting title/description from the config.

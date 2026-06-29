@@ -75,5 +75,26 @@ func TestHandleVerify_CreatesUserAndSession(t *testing.T) {
 	}
 }
 
+func TestClientIP_XFFTrust(t *testing.T) {
+	// Standard addr with port: header ignored when trustProxy=false.
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "203.0.113.7:5555"
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+
+	if got := clientIP(req, false); got != "203.0.113.7" {
+		t.Errorf("trustProxy=false: got %q, want 203.0.113.7", got)
+	}
+	if got := clientIP(req, true); got != "1.2.3.4" {
+		t.Errorf("trustProxy=true: got %q, want 1.2.3.4", got)
+	}
+
+	// RemoteAddr without port (no colon): falls back to raw value.
+	req2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	req2.RemoteAddr = "203.0.113.9"
+	if got := clientIP(req2, false); got != "203.0.113.9" {
+		t.Errorf("no-port fallback: got %q, want 203.0.113.9", got)
+	}
+}
+
 // ensure the package compiles with the email.Sender interface used
 var _ email.Sender = (*fakeSender)(nil)
