@@ -9,9 +9,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"app/auth"
 	"app/config"
 	"app/database"
+	"app/email"
 
 	"github.com/tunedmystic/rio"
 )
@@ -49,9 +52,17 @@ func run() error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 
+	if !Conf.Debug && Conf.AppSecret == "" {
+		return fmt.Errorf("APP_SECRET must be set in production")
+	}
+
 	store := database.NewStore(db)
+	sender := email.New(Conf.PostmarkToken, Conf.EmailFrom)
+	loginLimiter := auth.NewLimiter(5, 15*time.Minute)
 
 	s := rio.NewServer()
+	s.Use(auth.LoadUser(store)) // server-wide: populate the current user
+
 	s.Handle("/", HandleHome())
 	s.Handle("/messages", HandleMessages(store))
 	s.Handle("/about", HandleAbout())
@@ -59,6 +70,13 @@ func run() error {
 	s.Handle("/version", HandleVersion())
 	s.Handle("/healthz", HandleHealth(db))
 	s.Handle("/robots.txt", HandleRobots())
+
+	// Auth
+	s.Handle("/login", HandleLogin(store, sender, loginLimiter))
+	s.Handle("/login/sent", HandleLoginSent())
+	s.Handle("/auth/verify", HandleVerify(store))
+	s.Handle("/logout", HandleLogout(store))
+
 	s.Handle("/static/", HandleStatic())
 
 	// Cancel the context on Ctrl-C or SIGTERM (e.g. `docker stop`) so the
