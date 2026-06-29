@@ -77,6 +77,14 @@ func run() error {
 	s.Handle("/auth/verify", HandleVerify(store))
 	s.Handle("/logout", HandleLogout(store))
 
+	// Account (authenticated)
+	s.Handle("/account", auth.RequireUser(HandleAccount(store)))
+	s.Handle("/account/security", auth.RequireUser(HandleSecurity(store)))
+	s.Handle("/account/sessions/revoke", auth.RequireUser(HandleRevokeSession(store)))
+	s.Handle("/account/sessions/revoke-all", auth.RequireUser(HandleRevokeAllSessions(store)))
+	s.Handle("/account/billing", auth.RequireUser(HandleBilling()))
+	s.Handle("/account/delete", auth.RequireUser(HandleDeleteAccount(store)))
+
 	s.Handle("/static/", HandleStatic())
 
 	// Cancel the context on Ctrl-C or SIGTERM (e.g. `docker stop`) so the
