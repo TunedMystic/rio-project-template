@@ -91,6 +91,7 @@ func run() error {
 	s.Handle("/account/sessions/revoke-all", auth.RequireUser(HandleRevokeAllSessions(store)))
 	s.Handle("/account/billing", auth.RequireUser(HandleBilling()))
 	s.Handle("/account/delete", auth.RequireUser(HandleDeleteAccount(store)))
+	s.Handle("/account/google/disconnect", auth.RequireUser(HandleDisconnectGoogle(store)))
 
 	s.Handle("/static/", HandleStatic())
 

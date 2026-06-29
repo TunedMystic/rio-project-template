@@ -3,6 +3,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"app/auth"
@@ -130,6 +131,21 @@ func HandleDeleteAccount(store *database.Store) http.Handler {
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Delete account")
 		return render(w, http.StatusOK, views.Danger(Conf.PageDataFor(account(r)), meta, accountView(r, "danger"), user.Email))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleDisconnectGoogle(store *database.Store) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		if !requireCSRF(w, r) {
+			return nil
+		}
+		user, _ := auth.UserFrom(r.Context())
+		if err := store.ClearUserGoogleID(r.Context(), user.ID); err != nil {
+			return err
+		}
+		http.Redirect(w, r, "/account/security?flash="+url.QueryEscape("Google disconnected"), http.StatusSeeOther)
+		return nil
 	}
 	return rio.MakeHandler(fn)
 }
