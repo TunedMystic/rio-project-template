@@ -3,6 +3,7 @@ module app
 go 1.26.4
 
 require (
+	github.com/stripe/stripe-go/v82 v82.5.1
 	github.com/tunedmystic/rio v0.26.0
 	modernc.org/sqlite v1.53.0
 )
