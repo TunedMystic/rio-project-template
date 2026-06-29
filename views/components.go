@@ -165,6 +165,45 @@ func featureRow(iconName, title, desc, href string) dom.Node {
 	)
 }
 
+// deviceLabel turns a raw User-Agent string into a friendly "Browser · OS"
+// label for the active-sessions list, falling back to a generic description
+// when it can't be recognized.
+func deviceLabel(ua string) string {
+	if strings.TrimSpace(ua) == "" {
+		return "Unknown device"
+	}
+	browser := "Browser"
+	switch {
+	case strings.Contains(ua, "Edg/"):
+		browser = "Edge"
+	case strings.Contains(ua, "OPR/"), strings.Contains(ua, "Opera"):
+		browser = "Opera"
+	case strings.Contains(ua, "Firefox/"):
+		browser = "Firefox"
+	case strings.Contains(ua, "Chrome/"):
+		browser = "Chrome"
+	case strings.Contains(ua, "Safari/"):
+		browser = "Safari"
+	}
+	os := ""
+	switch {
+	case strings.Contains(ua, "iPhone"), strings.Contains(ua, "iPad"):
+		os = "iOS"
+	case strings.Contains(ua, "Mac OS X"), strings.Contains(ua, "Macintosh"):
+		os = "macOS"
+	case strings.Contains(ua, "Android"):
+		os = "Android"
+	case strings.Contains(ua, "Windows"):
+		os = "Windows"
+	case strings.Contains(ua, "Linux"):
+		os = "Linux"
+	}
+	if os != "" {
+		return browser + " · " + os
+	}
+	return browser
+}
+
 // submitButton renders a submit button styled like a ui primary button.
 // ui.Button hardcodes type="button"; if submit buttons recur across products,
 // promote a submit/type option into rio/ui (rule of three).

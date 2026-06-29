@@ -75,50 +75,75 @@ func Profile(pd config.PageData, meta config.Meta, av AccountView, name, email s
 	)
 }
 
+// deviceBadge is a single-line success pill marking the current session.
+func deviceBadge(label string) dom.Node {
+	return dom.Span(
+		dom.Class("inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[length:var(--font-size-sm)] font-medium ring-1 ring-inset bg-[var(--color-success)]/12 text-[var(--color-success)] ring-[var(--color-success)]/25"),
+		dom.Text(label),
+	)
+}
+
 func Security(pd config.PageData, meta config.Meta, av AccountView, sessions []database.Session, currentID string) dom.Node {
 	rows := make([]dom.Node, 0, len(sessions))
 	for _, s := range sessions {
-		meta := s.IP
-		if s.UserAgent != "" {
-			meta = s.UserAgent + " · " + s.IP
+		location := s.IP
+		if location == "" {
+			location = "Unknown location"
 		}
-		badge := dom.Node(dom.Text(""))
+
+		heading := []dom.Node{
+			dom.Class("flex items-center gap-2"),
+			dom.Span(dom.Class("font-medium text-[var(--color-text)]"), dom.Text(deviceLabel(s.UserAgent))),
+		}
+		action := dom.Node(dom.Text(""))
 		if s.ID == currentID {
-			badge = ui.Badge(ui.BadgeSuccess, "This device")
-		}
-		right := dom.Node(dom.Text(""))
-		if s.ID != currentID {
-			right = dom.Form(
+			heading = append(heading, deviceBadge("This device"))
+		} else {
+			action = dom.Form(
 				dom.Method("post"),
 				dom.Action("/account/sessions/revoke"),
 				csrfInput(av.CSRF),
 				dom.Input(dom.Type("hidden"), dom.Name("id"), dom.Value(s.ID)),
 				dom.Button(dom.Type("submit"),
-					dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-danger)] hover:underline cursor-pointer"),
+					dom.Class("shrink-0 rounded-[var(--radius-base)] border border-[var(--color-border)] px-3 py-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] cursor-pointer"),
 					dom.Text("Sign out")),
 			)
 		}
+
 		rows = append(rows, dom.Div(
-			dom.Class("flex items-center justify-between border-b border-[var(--color-border)] py-3"),
-			dom.Div(dom.Class("flex items-center gap-3"),
-				dom.Span(dom.Class("text-[var(--color-text)]"), dom.Text(meta)), badge),
-			right,
+			dom.Class("flex items-center justify-between gap-4 border-b border-[var(--color-border)] py-4 last:border-0"),
+			dom.Div(
+				dom.Class("min-w-0"),
+				dom.Div(heading...),
+				dom.P(dom.Class("mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text(location)),
+			),
+			action,
 		))
 	}
 
-	return accountShell(pd, meta, av,
-		card(
-			ruledHeading("Active sessions"),
-			dom.Div(withClass("mt-2", rows)...),
+	body := []dom.Node{
+		ruledHeading("Active sessions"),
+		dom.P(
+			dom.Class("mt-3 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"),
+			dom.Text("Devices currently signed in to your account."),
+		),
+		dom.Div(withClass("mt-2", rows)...),
+	}
+	if len(sessions) > 1 {
+		body = append(body,
 			dom.Form(
 				dom.Method("post"),
 				dom.Action("/account/sessions/revoke-all"),
 				dom.Class("mt-6"),
 				csrfInput(av.CSRF),
-				submitButton("Sign out everywhere else"),
+				dom.Button(dom.Type("submit"),
+					dom.Class("inline-flex items-center justify-center rounded-[var(--radius-base)] border border-[var(--color-border)] px-4 py-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text)] transition hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] cursor-pointer"),
+					dom.Text("Sign out everywhere else")),
 			),
-		),
-	)
+		)
+	}
+
+	return accountShell(pd, meta, av, card(body...))
 }
 
 func Billing(pd config.PageData, meta config.Meta, av AccountView) dom.Node {

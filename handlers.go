@@ -26,10 +26,10 @@ func HandleHome() http.Handler {
 		// Treat any unknown path under "/" as 404.
 		if r.URL.Path != "/" {
 			meta := Conf.NewMeta(r.URL.RequestURI(), "Not found")
-			return render(w, http.StatusNotFound, views.NotFound(Conf.PageData(), meta))
+			return render(w, http.StatusNotFound, views.NotFound(Conf.PageDataFor(account(r)), meta))
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "")
-		return render(w, http.StatusOK, views.Home(Conf.PageData(), meta))
+		return render(w, http.StatusOK, views.Home(Conf.PageDataFor(account(r)), meta))
 	}
 	return rio.MakeHandler(fn)
 }
@@ -50,7 +50,7 @@ func HandleMessages(store *database.Store) http.Handler {
 				field := form.MustField("body")
 				meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
 				return render(w, http.StatusUnprocessableEntity,
-					views.Messages(Conf.PageData(), meta, msgs, field.Value(), field.Err().Error()))
+					views.Messages(Conf.PageDataFor(account(r)), meta, msgs, field.Value(), field.Err().Error()))
 			}
 
 			if err := store.CreateMessage(r.Context(), form.CleanedString("body")); err != nil {
@@ -65,7 +65,7 @@ func HandleMessages(store *database.Store) http.Handler {
 			return err
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
-		return render(w, http.StatusOK, views.Messages(Conf.PageData(), meta, msgs, "", ""))
+		return render(w, http.StatusOK, views.Messages(Conf.PageDataFor(account(r)), meta, msgs, "", ""))
 	}
 	return rio.MakeHandler(fn)
 }
@@ -73,7 +73,7 @@ func HandleMessages(store *database.Store) http.Handler {
 func HandleAbout() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		meta := Conf.NewMeta(r.URL.RequestURI(), "About")
-		return render(w, http.StatusOK, views.About(Conf.PageData(), meta))
+		return render(w, http.StatusOK, views.About(Conf.PageDataFor(account(r)), meta))
 	}
 	return rio.MakeHandler(fn)
 }
@@ -81,7 +81,7 @@ func HandleAbout() http.Handler {
 func HandlePrivacyPolicy() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Privacy Policy")
-		return render(w, http.StatusOK, views.PrivacyPolicy(Conf.PageData(), meta))
+		return render(w, http.StatusOK, views.PrivacyPolicy(Conf.PageDataFor(account(r)), meta))
 	}
 	return rio.MakeHandler(fn)
 }
