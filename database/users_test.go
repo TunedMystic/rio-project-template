@@ -95,3 +95,39 @@ func TestUsers_BillingFields(t *testing.T) {
 		t.Error("expected unique-constraint error on duplicate stripe_customer_id")
 	}
 }
+
+func TestUsers_GoogleIDLinkLookupClear(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	u, _ := s.CreateUser(ctx, "g@example.com", "G")
+	if u.GoogleID != "" {
+		t.Fatalf("new user GoogleID = %q, want empty", u.GoogleID)
+	}
+
+	if err := s.SetUserGoogleID(ctx, u.ID, "sub-123"); err != nil {
+		t.Fatalf("SetUserGoogleID: %v", err)
+	}
+
+	got, err := s.UserByGoogleID(ctx, "sub-123")
+	if err != nil || got.ID != u.ID {
+		t.Fatalf("UserByGoogleID = %+v, err %v", got, err)
+	}
+	if got.GoogleID != "sub-123" {
+		t.Errorf("GoogleID = %q, want sub-123", got.GoogleID)
+	}
+
+	// The same google_id cannot map to a second user (partial unique index).
+	u2, _ := s.CreateUser(ctx, "h@example.com", "H")
+	if err := s.SetUserGoogleID(ctx, u2.ID, "sub-123"); err == nil {
+		t.Error("expected unique-constraint error linking a duplicate google_id")
+	}
+
+	// Unlinking clears it.
+	if err := s.ClearUserGoogleID(ctx, u.ID); err != nil {
+		t.Fatalf("ClearUserGoogleID: %v", err)
+	}
+	if _, err := s.UserByGoogleID(ctx, "sub-123"); !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("after clear err = %v, want sql.ErrNoRows", err)
+	}
+}

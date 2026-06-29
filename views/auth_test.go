@@ -45,3 +45,23 @@ func TestNav_ShowsAccountWhenLoggedIn(t *testing.T) {
 		t.Error("logged-in nav should link to /account")
 	}
 }
+
+func TestLogin_ShowsGoogleWhenEnabled(t *testing.T) {
+	t.Setenv("GOOGLE_CLIENT_ID", "x")
+	t.Setenv("GOOGLE_CLIENT_SECRET", "y")
+	pd := config.New("debug", "h").PageData()
+	var b bytes.Buffer
+	_ = Login(pd, config.Meta{Title: "Log in"}, "", "", "/account").Render(&b)
+	if !strings.Contains(b.String(), `href="/auth/google/login"`) {
+		t.Error("expected Google login button when enabled")
+	}
+}
+
+func TestLogin_HidesGoogleWhenDisabled(t *testing.T) {
+	pd := testPageData() // GoogleEnabled == false
+	var b bytes.Buffer
+	_ = Login(pd, config.Meta{Title: "Log in"}, "", "", "/account").Render(&b)
+	if strings.Contains(b.String(), `/auth/google/login`) {
+		t.Error("Google button should be hidden when disabled")
+	}
+}

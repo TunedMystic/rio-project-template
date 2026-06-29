@@ -27,11 +27,19 @@ Email magic-link login + a tabbed account area (`/account`). Config via env:
 | `BASE_URL` | Absolute base for magic-link URLs | `http://localhost:<port>` |
 | `POSTMARK_TOKEN` | Postmark server token | unset → links logged to console |
 | `EMAIL_FROM` | From address | `noreply@localhost` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client id | unset → Google login hidden |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | unset → Google login hidden |
 | `TRUST_PROXY` | Honor X-Forwarded-For for client IP (set behind a trusted proxy) | unset → use the socket peer IP |
 
 In dev with no `POSTMARK_TOKEN`, the magic link is printed to the server log —
 click it from your terminal. In production, set all four (`APP_SECRET` is
 mandatory; the app refuses to start without it).
+
+**Google login:** create an OAuth 2.0 Client (type "Web application") in Google
+Cloud Console and register the redirect URI `<BASE_URL>/auth/google/callback`
+(e.g. `http://localhost:3000/auth/google/callback` in dev). Set both env vars to
+enable the "Continue with Google" button; leave them unset and the app falls
+back to email magic-link only.
 
 ## Billing (Stripe)
 

@@ -3,6 +3,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"app/auth"
@@ -25,7 +26,12 @@ func requireCSRF(w http.ResponseWriter, r *http.Request) bool {
 
 func accountView(r *http.Request, active string) views.AccountView {
 	sess, _ := auth.SessionFrom(r.Context())
-	return views.AccountView{Active: active, CSRF: auth.CSRFToken(Conf.AppSecret, sess.ID)}
+	return views.AccountView{
+		Active: active,
+		CSRF:   auth.CSRFToken(Conf.AppSecret, sess.ID),
+		Flash:  r.URL.Query().Get("flash"),
+		Error:  r.URL.Query().Get("err"),
+	}
 }
 
 func HandleAccount(store *database.Store) http.Handler {
@@ -59,7 +65,7 @@ func HandleSecurity(store *database.Store) http.Handler {
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Security")
 		av := accountView(r, "security")
-		return render(w, http.StatusOK, views.Security(Conf.PageDataFor(account(r)), meta, av, sessions, sess.ID))
+		return render(w, http.StatusOK, views.Security(Conf.PageDataFor(account(r)), meta, av, sessions, sess.ID, user.GoogleID != ""))
 	}
 	return rio.MakeHandler(fn)
 }
@@ -142,6 +148,21 @@ func HandleDeleteAccount(store *database.Store) http.Handler {
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Delete account")
 		return render(w, http.StatusOK, views.Danger(Conf.PageDataFor(account(r)), meta, accountView(r, "danger"), user.Email))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleDisconnectGoogle(store *database.Store) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		if !requireCSRF(w, r) {
+			return nil
+		}
+		user, _ := auth.UserFrom(r.Context())
+		if err := store.ClearUserGoogleID(r.Context(), user.ID); err != nil {
+			return err
+		}
+		http.Redirect(w, r, "/account/security?flash="+url.QueryEscape("Google disconnected"), http.StatusSeeOther)
+		return nil
 	}
 	return rio.MakeHandler(fn)
 }

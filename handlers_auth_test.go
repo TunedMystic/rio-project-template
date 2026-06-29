@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -98,3 +99,191 @@ func TestClientIP_XFFTrust(t *testing.T) {
 
 // ensure the package compiles with the email.Sender interface used
 var _ email.Sender = (*fakeSender)(nil)
+
+func TestGoogleSignIn_CreateLinkAndVerify(t *testing.T) {
+	store := authTestStore(t)
+	ctx := context.Background()
+
+	// New user is created with google_id and name backfilled.
+	u, err := googleSignIn(ctx, store, auth.GoogleUser{Sub: "s1", Email: "new@example.com", EmailVerified: true, Name: "Neo"})
+	if err != nil {
+		t.Fatalf("googleSignIn(new): %v", err)
+	}
+	if u.GoogleID != "s1" || u.Name != "Neo" {
+		t.Errorf("created user = %+v", u)
+	}
+
+	// Same google_id returns the same user.
+	again, _ := googleSignIn(ctx, store, auth.GoogleUser{Sub: "s1", Email: "new@example.com", EmailVerified: true})
+	if again.ID != u.ID {
+		t.Errorf("second sign-in id = %d, want %d", again.ID, u.ID)
+	}
+
+	// Existing email (magic-link user) gets linked.
+	existing, _ := store.CreateUser(ctx, "old@example.com", "Old")
+	linked, err := googleSignIn(ctx, store, auth.GoogleUser{Sub: "s2", Email: "old@example.com", EmailVerified: true})
+	if err != nil || linked.ID != existing.ID || linked.GoogleID != "s2" {
+		t.Errorf("link-by-email = %+v, err %v", linked, err)
+	}
+
+	// Unverified email is rejected.
+	if _, err := googleSignIn(ctx, store, auth.GoogleUser{Sub: "s3", Email: "x@example.com", EmailVerified: false}); err == nil {
+		t.Error("expected rejection for unverified email")
+	}
+}
+
+func TestGoogleLink_RejectsAlreadyLinked(t *testing.T) {
+	store := authTestStore(t)
+	ctx := context.Background()
+	a, _ := store.CreateUser(ctx, "a@example.com", "A")
+	_ = store.SetUserGoogleID(ctx, a.ID, "shared")
+	b, _ := store.CreateUser(ctx, "b@example.com", "B")
+
+	if err := googleLink(ctx, store, b, auth.GoogleUser{Sub: "shared", Email: "b@example.com", EmailVerified: true}); err == nil {
+		t.Error("expected error linking a google_id already used by another user")
+	}
+	if err := googleLink(ctx, store, b, auth.GoogleUser{Sub: "fresh", Email: "b@example.com", EmailVerified: true}); err != nil {
+		t.Errorf("googleLink(fresh): %v", err)
+	}
+	got, _ := store.UserByID(ctx, b.ID)
+	if got.GoogleID != "fresh" {
+		t.Errorf("b.GoogleID = %q, want fresh", got.GoogleID)
+	}
+}
+
+func TestGoogleCallback_RejectsBadState(t *testing.T) {
+	store := authTestStore(t)
+	oauth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	// No state cookie at all → redirect to /login, no network call.
+	req := httptest.NewRequest(http.MethodGet, "/auth/google/callback?code=x&state=y", nil)
+	rec := httptest.NewRecorder()
+	HandleGoogleCallback(store, oauth).ServeHTTP(rec, req)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login" {
+		t.Fatalf("bad-state callback = %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+func TestGoogleLogin_RedirectsToGoogle(t *testing.T) {
+	oauth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	req := httptest.NewRequest(http.MethodGet, "/auth/google/login", nil)
+	rec := httptest.NewRecorder()
+	HandleGoogleLogin(oauth).ServeHTTP(rec, req)
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "https://accounts.google.com/") {
+		t.Errorf("Location = %q", loc)
+	}
+	if len(rec.Result().Cookies()) == 0 {
+		t.Error("expected a state cookie to be set")
+	}
+}
+
+// fakeGoogleServer builds a minimal httptest server that responds to
+// /token and /userinfo.  tokenStatus is the HTTP status for /token;
+// userinfoStatus is the HTTP status for /userinfo.
+func fakeGoogleServer(t *testing.T, tokenStatus, userinfoStatus int) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			if tokenStatus != http.StatusOK {
+				http.Error(w, "bad_request", tokenStatus)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"access_token": "x",
+				"token_type":   "Bearer",
+			})
+		case "/userinfo":
+			if userinfoStatus != http.StatusOK {
+				http.Error(w, "server_error", userinfoStatus)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"sub":            "uid1",
+				"email":          "u@example.com",
+				"email_verified": true,
+				"name":           "User",
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+}
+
+// buildCallbackRequest creates a GET request to the Google callback URL with a
+// valid signed state cookie already attached.
+func buildCallbackRequest(t *testing.T) *http.Request {
+	t.Helper()
+	// Mint a signed state cookie using a helper recorder.
+	rec0 := httptest.NewRecorder()
+	auth.SetStateCookie(rec0, Conf.AppSecret,
+		auth.OAuthState{State: "st1", Next: "/", Mode: "login", Verifier: auth.NewVerifier()},
+		false)
+	req := httptest.NewRequest(http.MethodGet, "/auth/google/callback?state=st1&code=abc", nil)
+	for _, c := range rec0.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	return req
+}
+
+// TestGoogleCallback_FetchUserFails verifies that a 500 from Google's userinfo
+// endpoint renders the friendly VerifyError page (200) instead of a bare 500.
+func TestGoogleCallback_FetchUserFails(t *testing.T) {
+	srv := fakeGoogleServer(t, http.StatusOK, http.StatusInternalServerError)
+	defer srv.Close()
+
+	store := authTestStore(t)
+	gOAuth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	gOAuth.SetEndpoint(srv.URL+"/auth", srv.URL+"/token")
+	gOAuth.UserinfoURL = srv.URL + "/userinfo"
+
+	req := buildCallbackRequest(t)
+	rec := httptest.NewRecorder()
+	HandleGoogleCallback(store, gOAuth).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("FetchUser-fail: got status %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Link expired") {
+		t.Errorf("FetchUser-fail: response body missing 'Link expired'; got: %q", body[:min(len(body), 500)])
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "session" {
+			t.Errorf("FetchUser-fail: unexpected session cookie set: %v", c)
+		}
+	}
+}
+
+// TestGoogleCallback_ExchangeFails verifies that a 400 from Google's token
+// endpoint renders the friendly VerifyError page (200) instead of a bare 500.
+func TestGoogleCallback_ExchangeFails(t *testing.T) {
+	srv := fakeGoogleServer(t, http.StatusBadRequest, http.StatusOK)
+	defer srv.Close()
+
+	store := authTestStore(t)
+	gOAuth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	gOAuth.SetEndpoint(srv.URL+"/auth", srv.URL+"/token")
+	gOAuth.UserinfoURL = srv.URL + "/userinfo"
+
+	req := buildCallbackRequest(t)
+	rec := httptest.NewRecorder()
+	HandleGoogleCallback(store, gOAuth).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Exchange-fail: got status %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Link expired") {
+		t.Errorf("Exchange-fail: response body missing 'Link expired'; got: %q", body[:min(len(body), 500)])
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "session" {
+			t.Errorf("Exchange-fail: unexpected session cookie set: %v", c)
+		}
+	}
+}
