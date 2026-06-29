@@ -10,6 +10,7 @@ import (
 	"app/billing"
 	"app/config"
 	"app/database"
+	"app/views"
 
 	"github.com/tunedmystic/rio"
 )
@@ -105,6 +106,22 @@ func HandleStripeWebhook(store *database.Store, bc billing.Client) http.Handler 
 		}
 		w.WriteHeader(http.StatusOK)
 		return nil
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandlePremium() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "Premium")
+		return render(w, http.StatusOK, views.Premium(Conf.PageDataFor(account(r)), meta))
+	}
+	return rio.MakeHandler(fn)
+}
+
+func HandleGuide() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "The Guide")
+		return render(w, http.StatusOK, views.Guide(Conf.PageDataFor(account(r)), meta))
 	}
 	return rio.MakeHandler(fn)
 }

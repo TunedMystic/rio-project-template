@@ -92,6 +92,8 @@ func run() error {
 		s.Handle("/account/billing/checkout", auth.RequireUser(HandleCheckout(store, bc)))
 		s.Handle("/account/billing/portal", auth.RequireUser(HandlePortal(store, bc)))
 		s.Handle("/webhooks/stripe", HandleStripeWebhook(store, bc))
+		s.Handle("/premium", auth.RequireUser(auth.RequireSubscription(HandlePremium())))
+		s.Handle("/guide", auth.RequireUser(auth.RequireEntitlement(store, "ebook")(HandleGuide())))
 	}
 
 	s.Handle("/static/", HandleStatic())
