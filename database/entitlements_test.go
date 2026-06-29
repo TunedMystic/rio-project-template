@@ -42,3 +42,20 @@ func TestEntitlements_GrantIsIdempotent(t *testing.T) {
 		t.Error("entitlement not cascaded on user delete")
 	}
 }
+
+func TestListEntitlements_EmptyIsNonNil(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	u, _ := s.CreateUser(ctx, "z@example.com", "Z")
+
+	list, err := s.ListEntitlements(ctx, u.ID)
+	if err != nil {
+		t.Fatalf("ListEntitlements: %v", err)
+	}
+	if list == nil {
+		t.Error("ListEntitlements returned nil, want non-nil empty slice")
+	}
+	if len(list) != 0 {
+		t.Errorf("len = %d, want 0", len(list))
+	}
+}

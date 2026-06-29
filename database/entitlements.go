@@ -28,7 +28,7 @@ func (s *Store) ListEntitlements(ctx context.Context, userID int64) ([]string, e
 		return nil, err
 	}
 	defer rows.Close()
-	var out []string
+	out := []string{}
 	for rows.Next() {
 		var k string
 		if err := rows.Scan(&k); err != nil {
