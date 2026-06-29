@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -175,5 +176,114 @@ func TestGoogleLogin_RedirectsToGoogle(t *testing.T) {
 	}
 	if len(rec.Result().Cookies()) == 0 {
 		t.Error("expected a state cookie to be set")
+	}
+}
+
+// fakeGoogleServer builds a minimal httptest server that responds to
+// /token and /userinfo.  tokenStatus is the HTTP status for /token;
+// userinfoStatus is the HTTP status for /userinfo.
+func fakeGoogleServer(t *testing.T, tokenStatus, userinfoStatus int) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			if tokenStatus != http.StatusOK {
+				http.Error(w, "bad_request", tokenStatus)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"access_token": "x",
+				"token_type":   "Bearer",
+			})
+		case "/userinfo":
+			if userinfoStatus != http.StatusOK {
+				http.Error(w, "server_error", userinfoStatus)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"sub":            "uid1",
+				"email":          "u@example.com",
+				"email_verified": true,
+				"name":           "User",
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+}
+
+// buildCallbackRequest creates a GET request to the Google callback URL with a
+// valid signed state cookie already attached.
+func buildCallbackRequest(t *testing.T) *http.Request {
+	t.Helper()
+	// Mint a signed state cookie using a helper recorder.
+	rec0 := httptest.NewRecorder()
+	auth.SetStateCookie(rec0, Conf.AppSecret,
+		auth.OAuthState{State: "st1", Next: "/", Mode: "login", Verifier: auth.NewVerifier()},
+		false)
+	req := httptest.NewRequest(http.MethodGet, "/auth/google/callback?state=st1&code=abc", nil)
+	for _, c := range rec0.Result().Cookies() {
+		req.AddCookie(c)
+	}
+	return req
+}
+
+// TestGoogleCallback_FetchUserFails verifies that a 500 from Google's userinfo
+// endpoint renders the friendly VerifyError page (200) instead of a bare 500.
+func TestGoogleCallback_FetchUserFails(t *testing.T) {
+	srv := fakeGoogleServer(t, http.StatusOK, http.StatusInternalServerError)
+	defer srv.Close()
+
+	store := authTestStore(t)
+	gOAuth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	gOAuth.SetEndpoint(srv.URL+"/auth", srv.URL+"/token")
+	gOAuth.UserinfoURL = srv.URL + "/userinfo"
+
+	req := buildCallbackRequest(t)
+	rec := httptest.NewRecorder()
+	HandleGoogleCallback(store, gOAuth).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("FetchUser-fail: got status %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Link expired") {
+		t.Errorf("FetchUser-fail: response body missing 'Link expired'; got: %q", body[:min(len(body), 500)])
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "session" {
+			t.Errorf("FetchUser-fail: unexpected session cookie set: %v", c)
+		}
+	}
+}
+
+// TestGoogleCallback_ExchangeFails verifies that a 400 from Google's token
+// endpoint renders the friendly VerifyError page (200) instead of a bare 500.
+func TestGoogleCallback_ExchangeFails(t *testing.T) {
+	srv := fakeGoogleServer(t, http.StatusBadRequest, http.StatusOK)
+	defer srv.Close()
+
+	store := authTestStore(t)
+	gOAuth := auth.NewGoogleOAuth("cid", "csec", "http://localhost/cb")
+	gOAuth.SetEndpoint(srv.URL+"/auth", srv.URL+"/token")
+	gOAuth.UserinfoURL = srv.URL + "/userinfo"
+
+	req := buildCallbackRequest(t)
+	rec := httptest.NewRecorder()
+	HandleGoogleCallback(store, gOAuth).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("Exchange-fail: got status %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Link expired") {
+		t.Errorf("Exchange-fail: response body missing 'Link expired'; got: %q", body[:min(len(body), 500)])
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == "session" {
+			t.Errorf("Exchange-fail: unexpected session cookie set: %v", c)
+		}
 	}
 }

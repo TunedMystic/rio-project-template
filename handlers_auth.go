@@ -243,11 +243,13 @@ func HandleGoogleCallback(store *database.Store, oauth *auth.GoogleOAuth) http.H
 
 		token, err := oauth.Exchange(r.Context(), r.URL.Query().Get("code"), st.Verifier)
 		if err != nil {
-			return err
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Sign-in failed")
+			return render(w, http.StatusOK, views.VerifyError(Conf.PageDataFor(account(r)), meta))
 		}
 		gu, err := oauth.FetchUser(r.Context(), token)
 		if err != nil {
-			return err
+			meta := Conf.NewMeta(r.URL.RequestURI(), "Sign-in failed")
+			return render(w, http.StatusOK, views.VerifyError(Conf.PageDataFor(account(r)), meta))
 		}
 
 		// Link mode: attach to the already-signed-in user.

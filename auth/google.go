@@ -63,6 +63,11 @@ func NewGoogleOAuth(clientID, clientSecret, redirectURL string) *GoogleOAuth {
 	}
 }
 
+// SetEndpoint overrides the OAuth2 endpoint (used in tests to point at a fake server).
+func (g *GoogleOAuth) SetEndpoint(authURL, tokenURL string) {
+	g.cfg.Endpoint = oauth2.Endpoint{AuthURL: authURL, TokenURL: tokenURL}
+}
+
 // NewVerifier returns a fresh PKCE code verifier.
 func NewVerifier() string { return oauth2.GenerateVerifier() }
 
