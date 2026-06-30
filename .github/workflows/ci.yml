@@ -22,8 +22,11 @@ jobs:
 
       - name: Test
         run: |
-          go test ./... -v -count=1 2>&1 | tee test.log
-          echo "Tests run: $(grep -c '^=== RUN' test.log)"
+          set -o pipefail
+          # Standard (non-verbose) results — fails the job on any test failure.
+          go test ./... -count=1
+          # Report how many tests ran (cached JSON pass, used only for the count).
+          echo "Tests run: $(go test ./... -json | grep -c '"Action":"run"')"
 
       - name: Build
         run: go build -o /dev/null .
