@@ -10,24 +10,44 @@ import (
 )
 
 // navbar is the top bar: a monogram + site name on the left, links on the
-// right. Links stay quiet (muted) until hovered, when they pick up the accent.
+// right. On small screens the links collapse into a <details> hamburger.
 func navbar(pd config.PageData) dom.Node {
-	links := make([]dom.Node, 0, len(pd.HeaderLinks)+2)
-	links = append(links, dom.Class("flex items-center gap-6"))
-	for _, l := range pd.HeaderLinks {
-		links = append(links, navLink(l))
+	// Build the shared link list once; reused by the desktop nav and the
+	// mobile disclosure so there is a single source of truth.
+	linkNodes := func() []dom.Node {
+		nodes := make([]dom.Node, 0, len(pd.HeaderLinks)+1)
+		for _, l := range pd.HeaderLinks {
+			nodes = append(nodes, navLink(l))
+		}
+		if pd.Account.LoggedIn {
+			nodes = append(nodes, accountMenu(pd.Account))
+		} else {
+			nodes = append(nodes, navLink(config.Link{Text: "Log in", Href: "/login"}))
+		}
+		return nodes
 	}
-	if pd.Account.LoggedIn {
-		links = append(links, accountMenu(pd.Account))
-	} else {
-		links = append(links, navLink(config.Link{Text: "Log in", Href: "/login"}))
-	}
+
+	desktop := dom.Nav(withClass("items-center gap-6 hidden sm:flex", linkNodes())...)
+
+	mobile := dom.Details(
+		dom.Class("relative sm:hidden"),
+		dom.Summary(
+			dom.Class("flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-[var(--radius-base)] text-[var(--color-text)] [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
+			dom.Aria("label", "Toggle navigation menu"),
+			icon("menu", 22),
+		),
+		dom.Nav(withClass(
+			"absolute right-0 z-20 mt-2 flex w-44 flex-col gap-1 rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-lg",
+			linkNodes())...),
+	)
+
 	return dom.Header(
-		dom.Class("border-b border-[var(--color-border)] bg-[#f8f5ee]"),
+		dom.Class("border-b border-[var(--color-border)] bg-[var(--color-surface)]"),
 		dom.Div(
 			dom.Class("mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-4"),
 			brand(pd),
-			dom.Nav(links...),
+			desktop,
+			mobile,
 		),
 	)
 }
@@ -93,7 +113,7 @@ func brand(pd config.PageData) dom.Node {
 
 func navLink(l config.Link) dom.Node {
 	return dom.A(
-		dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)]"),
+		dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 		dom.Href(l.Href),
 		dom.Text(l.Text),
 	)
@@ -273,8 +293,14 @@ func icon(name string, size int) dom.Node {
 		body = `<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>`
 	case "chevron-right":
 		body = `<path d="m9 18 6-6-6-6"/>`
+	case "menu":
+		body = `<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>`
 	case "check":
 		body = `<path d="M20 6 9 17l-5-5"/>`
+	case "chevron-down":
+		body = `<path d="m6 9 6 6 6-6"/>`
+	case "more":
+		body = `<circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>`
 	case "heart":
 		return dom.Raw(fmt.Sprintf(heart, size, size) + `<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`)
 	default:

@@ -55,6 +55,7 @@ type PageData struct {
 	SiteName      string
 	AssetVersion  string
 	Tokens        ui.Tokens
+	ThemeVars     []ThemeVar
 	HeaderLinks   []Link
 	FooterLinks   []Link
 	Account       Account
@@ -72,6 +73,7 @@ type Config struct {
 	DBPath              string
 	AssetVersion        string
 	Tokens              ui.Tokens
+	Theme               Theme
 	HeaderLinks         []Link
 	FooterLinks         []Link
 	BaseURL             string
@@ -100,7 +102,7 @@ func New(buildEnv, buildHash string) Config {
 		Addr:         addrFromEnv(),
 		Debug:        debug,
 		AssetVersion: buildHash,
-		Tokens:       defaultTokens(),
+		Theme:        ThemeSlateIndigo, // <-- compile-time preset; set ThemeDusk for dark
 		HeaderLinks: []Link{
 			{Text: "Messages", Href: "/messages"},
 			{Text: "About", Href: "/about"},
@@ -108,9 +110,11 @@ func New(buildEnv, buildHash string) Config {
 		FooterLinks: []Link{
 			{Text: "Home", Href: "/"},
 			{Text: "About", Href: "/about"},
+			{Text: "Kit", Href: "/kit"},
 			{Text: "Privacy Policy", Href: "/privacy-policy"},
 		},
 	}
+	c.Tokens = c.Theme.Tokens()
 	c.DBPath = DBPath(c.ProjectName, debug)
 	c.BaseURL = baseURLFromEnv(c.Addr)
 	c.AppSecret = appSecretFromEnv(debug)
@@ -162,6 +166,7 @@ func (c Config) PageData() PageData {
 		SiteName:      c.SiteName,
 		AssetVersion:  c.AssetVersion,
 		Tokens:        c.Tokens,
+		ThemeVars:     c.Theme.Vars(),
 		HeaderLinks:   c.HeaderLinks,
 		FooterLinks:   c.FooterLinks,
 		GoogleEnabled: c.GoogleEnabled(),
@@ -247,34 +252,4 @@ func (c Config) ProductByKey(key string) (Product, bool) {
 		}
 	}
 	return Product{}, false
-}
-
-// defaultTokens is the starter brand. Products edit this literal.
-func defaultTokens() ui.Tokens {
-	return ui.Tokens{
-		FontFamily:   `"Inter", ui-sans-serif, system-ui, sans-serif`,
-		FontSizeSm:   "16px",
-		FontSizeBase: "18px",
-		FontSizeLg:   "20px",
-		FontSizeXl:   "24px",
-		FontSize2xl:  "30px",
-		// A calm, warm palette: a single deep-teal accent on warm-stone
-		// neutrals, white cards floating on a soft cream canvas. Edit these
-		// to rebrand the whole app — every component reads these variables.
-		ColorPrimary:      "#0d9488", // vibrant teal
-		OnPrimary:         "#ffffff",
-		ColorSecondary:    "#57534e", // warm stone-600
-		OnSecondary:       "#ffffff",
-		ColorBackground:   "#fcfbf9", // near-white canvas (a whisper of warm)
-		ColorSurface:      "#ffffff", // white cards
-		ColorText:         "#1c1917", // stone-900
-		ColorTextMuted:    "#78716c", // stone-500
-		ColorBorder:       "#e7e5e4", // stone-200
-		ColorSuccess:      "#15803d",
-		ColorWarning:      "#b45309",
-		ColorDanger:       "#be123c",
-		ColorInfo:         "#0e7490",
-		RadiusBase:        "0.75rem",
-		FontWeightHeading: "700",
-	}
 }
