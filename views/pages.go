@@ -70,6 +70,7 @@ func Home(pd config.PageData, meta config.Meta) dom.Node {
 		faq(faqs),
 
 		ctaBand("Ready to build?", "Clone the template and ship your idea this weekend.",
+			"git clone https://github.com/you/app.git",
 			ui.ButtonLink(ui.ButtonPrimary, "/login", "Get started")),
 	)
 }

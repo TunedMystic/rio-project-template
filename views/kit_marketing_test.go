@@ -71,8 +71,8 @@ func TestFeatureHighlight_RendersTitle(t *testing.T) {
 }
 
 func TestCtaBand_RendersTitleAndCTA(t *testing.T) {
-	html := render(ctaBand("Ready?", "Start in minutes.", dom.Text("Sign up")))
-	for _, want := range []string{"Ready?", "Start in minutes.", "Sign up"} {
+	html := render(ctaBand("Ready?", "Start in minutes.", "git clone you/app", dom.Text("Sign up")))
+	for _, want := range []string{"Ready?", "Start in minutes.", "git clone you/app", "Sign up"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("ctaBand missing %q", want)
 		}

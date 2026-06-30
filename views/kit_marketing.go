@@ -192,22 +192,54 @@ func logoCloud(labels []string) dom.Node {
 	return dom.Section(dom.Class("py-10"), shell(dom.Div(items...)))
 }
 
-// ctaBand renders a full-width call-to-action band.
-func ctaBand(title, body string, cta dom.Node) dom.Node {
+// ctaBand renders the page's closing call-to-action: an elevated launch panel
+// that echoes the highlighted pricing card (crisp accent border + ring), with a
+// faux-terminal "git clone" line as its signature — turning the headline's
+// promise into the actual first command you'd run.
+func ctaBand(title, body, command string, cta dom.Node) dom.Node {
 	return dom.Section(
 		dom.Class("py-12"),
 		shell(dom.Div(
-			dom.Class("flex flex-col items-center gap-5 rounded-[var(--radius-base)] bg-[var(--color-primary)] px-8 py-12 text-center"),
+			dom.Class("rounded-[var(--radius-base)] border-2 border-[var(--color-primary)] bg-[var(--color-surface)] px-6 py-14 text-center ring-1 ring-[var(--color-ring)] sm:px-12"),
+			eyebrow("Start here"),
 			dom.H2(
-				dom.Class("text-[length:var(--font-size-xl)] [font-weight:var(--font-weight-heading)] tracking-tight text-[var(--color-on-primary)]"),
+				dom.Class("mt-3 text-[length:var(--font-size-2xl)] [font-weight:var(--font-weight-heading)] tracking-tight text-[var(--color-text)]"),
 				dom.Text(title),
 			),
 			dom.P(
-				dom.Class("max-w-xl text-[var(--color-on-primary)]/80"),
+				dom.Class("mx-auto mt-3 max-w-md text-[var(--color-text-muted)]"),
 				dom.Text(body),
 			),
-			cta,
+			terminalChip(command),
+			dom.Div(dom.Class("mt-8 flex justify-center"), cta),
 		)),
+	)
+}
+
+// terminalChip renders a small, faux terminal window framing a single shell
+// command. It mirrors the kit's no-JS, server-rendered character (a real line,
+// not a screenshot) and gives the closing CTA its memorable focal point.
+func terminalChip(command string) dom.Node {
+	// Full class literals (not concatenated) so Tailwind's source scanner emits
+	// each color utility.
+	return dom.Div(
+		dom.Class("mx-auto mt-8 max-w-md overflow-hidden rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-background)] text-left shadow-sm"),
+		dom.Div(
+			dom.Class("flex items-center gap-1.5 border-b border-[var(--color-border)] px-3 py-2.5"),
+			dom.Span(dom.Class("h-2.5 w-2.5 rounded-full bg-[var(--color-danger)]")),
+			dom.Span(dom.Class("h-2.5 w-2.5 rounded-full bg-[var(--color-warning)]")),
+			dom.Span(dom.Class("h-2.5 w-2.5 rounded-full bg-[var(--color-success)]")),
+			dom.Span(
+				dom.Class("ml-2 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"),
+				dom.Text("bash"),
+			),
+		),
+		dom.Div(
+			dom.Class("flex items-center gap-2 overflow-x-auto px-4 py-3.5 font-mono text-[length:var(--font-size-sm)] whitespace-nowrap"),
+			dom.Span(dom.Class("select-none text-[var(--color-primary)]"), dom.Text("$")),
+			dom.Span(dom.Class("text-[var(--color-text)]"), dom.Text(command)),
+			dom.Span(dom.Class("inline-block h-4 w-2 shrink-0 animate-pulse bg-[var(--color-primary)] motion-reduce:animate-none")),
+		),
 	)
 }
 

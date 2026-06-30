@@ -87,7 +87,7 @@ func Kit(pd config.PageData, meta config.Meta) dom.Node {
 			pricingTable(plans),
 			testimonial("This template saved us a week of setup.", "Ada Lovelace", "CTO, Acme"),
 			faq(faqs),
-			ctaBand("Ready to build?", "Clone the template and ship your idea.", ui.ButtonLink(ui.ButtonPrimary, "#", "Start now")),
+			ctaBand("Ready to build?", "Clone the template and ship your idea.", "git clone https://github.com/you/app.git", ui.ButtonLink(ui.ButtonPrimary, "#", "Start now")),
 		),
 
 		kitSection("Feedback & forms",
