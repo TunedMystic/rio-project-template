@@ -268,6 +268,8 @@ func icon(name string, size int) dom.Node {
 		body = `<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>`
 	case "check":
 		body = `<path d="M20 6 9 17l-5-5"/>`
+	case "chevron-down":
+		body = `<path d="m6 9 6 6 6-6"/>`
 	case "more":
 		body = `<circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>`
 	case "heart":
