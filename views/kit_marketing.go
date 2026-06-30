@@ -219,7 +219,7 @@ func faq(items []faqItem) dom.Node {
 		rows = append(rows, dom.Details(
 			dom.Class("group px-5"),
 			dom.Summary(
-				dom.Class("flex cursor-pointer list-none items-center justify-between py-4 font-medium text-[var(--color-text)] [&::-webkit-details-marker]:hidden"),
+				dom.Class("flex cursor-pointer list-none items-center justify-between py-4 font-medium text-[var(--color-text)] [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 				dom.Text(it.Q),
 				dom.Span(
 					dom.Class("text-[var(--color-text-muted)] transition-transform group-open:rotate-180"),

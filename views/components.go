@@ -32,7 +32,7 @@ func navbar(pd config.PageData) dom.Node {
 	mobile := dom.Details(
 		dom.Class("relative sm:hidden"),
 		dom.Summary(
-			dom.Class("flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-[var(--radius-base)] text-[var(--color-text)] [&::-webkit-details-marker]:hidden"),
+			dom.Class("flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-[var(--radius-base)] text-[var(--color-text)] [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 			dom.Aria("label", "Toggle navigation menu"),
 			icon("menu", 22),
 		),
@@ -84,7 +84,7 @@ func brand(pd config.PageData) dom.Node {
 
 func navLink(l config.Link) dom.Node {
 	return dom.A(
-		dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)]"),
+		dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 		dom.Href(l.Href),
 		dom.Text(l.Text),
 	)

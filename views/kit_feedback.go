@@ -51,9 +51,9 @@ func tabStrip(items []tabItem, active string) dom.Node {
 	tabs := make([]dom.Node, 0, len(items)+1)
 	tabs = append(tabs, dom.Class("flex gap-2 border-b border-[var(--color-border)]"))
 	for _, it := range items {
-		cls := "px-4 py-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+		cls := "px-4 py-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
 		if it.Key == active {
-			cls = "px-4 py-2 text-[length:var(--font-size-sm)] font-semibold text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] -mb-px"
+			cls = "px-4 py-2 text-[length:var(--font-size-sm)] font-semibold text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
 		}
 		tabs = append(tabs, dom.A(dom.Class(cls), dom.Href("#"), dom.Text(it.Label)))
 	}

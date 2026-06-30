@@ -144,7 +144,7 @@ func rowActions() dom.Node {
 	return dom.Details(
 		dom.Class("relative inline-block text-left"),
 		dom.Summary(
-			dom.Class("flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-[var(--radius-base)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] [&::-webkit-details-marker]:hidden"),
+			dom.Class("flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-[var(--radius-base)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 			dom.Aria("label", "Row actions"),
 			icon("more", 18),
 		),
@@ -159,7 +159,7 @@ func rowActions() dom.Node {
 
 func actionItem(label string) dom.Node {
 	return dom.A(
-		dom.Class("rounded-[calc(var(--radius-base)-2px)] px-3 py-1.5 text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]"),
+		dom.Class("rounded-[calc(var(--radius-base)-2px)] px-3 py-1.5 text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
 		dom.Href("#"),
 		dom.Text(label),
 	)
