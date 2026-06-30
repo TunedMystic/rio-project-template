@@ -47,3 +47,30 @@ func TestThemeVars_IncludeExtendedNames(t *testing.T) {
 		}
 	}
 }
+
+func TestConfigDefaultTheme(t *testing.T) {
+	c := New("debug", "v1test")
+	if c.Theme != ThemeSlateIndigo {
+		t.Errorf("default Theme = %d, want ThemeSlateIndigo", c.Theme)
+	}
+	if c.Tokens.ColorPrimary != "#4f46e5" {
+		t.Errorf("default Tokens.ColorPrimary = %q, want #4f46e5", c.Tokens.ColorPrimary)
+	}
+}
+
+func TestPageDataCarriesThemeVars(t *testing.T) {
+	c := New("debug", "v1test")
+	pd := c.PageData()
+	if len(pd.ThemeVars) == 0 {
+		t.Fatal("PageData.ThemeVars is empty")
+	}
+	var hasRing bool
+	for _, v := range pd.ThemeVars {
+		if v.Name == "--color-ring" && v.Value != "" {
+			hasRing = true
+		}
+	}
+	if !hasRing {
+		t.Error("PageData.ThemeVars missing --color-ring")
+	}
+}

@@ -55,6 +55,7 @@ type PageData struct {
 	SiteName      string
 	AssetVersion  string
 	Tokens        ui.Tokens
+	ThemeVars     []ThemeVar
 	HeaderLinks   []Link
 	FooterLinks   []Link
 	Account       Account
@@ -72,6 +73,7 @@ type Config struct {
 	DBPath              string
 	AssetVersion        string
 	Tokens              ui.Tokens
+	Theme               Theme
 	HeaderLinks         []Link
 	FooterLinks         []Link
 	BaseURL             string
@@ -100,7 +102,7 @@ func New(buildEnv, buildHash string) Config {
 		Addr:         addrFromEnv(),
 		Debug:        debug,
 		AssetVersion: buildHash,
-		Tokens:       ThemeSlateIndigo.Tokens(),
+		Theme:        ThemeSlateIndigo, // <-- compile-time preset; set ThemeDusk for dark
 		HeaderLinks: []Link{
 			{Text: "Messages", Href: "/messages"},
 			{Text: "About", Href: "/about"},
@@ -111,6 +113,7 @@ func New(buildEnv, buildHash string) Config {
 			{Text: "Privacy Policy", Href: "/privacy-policy"},
 		},
 	}
+	c.Tokens = c.Theme.Tokens()
 	c.DBPath = DBPath(c.ProjectName, debug)
 	c.BaseURL = baseURLFromEnv(c.Addr)
 	c.AppSecret = appSecretFromEnv(debug)
@@ -162,6 +165,7 @@ func (c Config) PageData() PageData {
 		SiteName:      c.SiteName,
 		AssetVersion:  c.AssetVersion,
 		Tokens:        c.Tokens,
+		ThemeVars:     c.Theme.Vars(),
 		HeaderLinks:   c.HeaderLinks,
 		FooterLinks:   c.FooterLinks,
 		GoogleEnabled: c.GoogleEnabled(),
