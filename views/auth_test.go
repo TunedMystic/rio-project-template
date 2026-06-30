@@ -41,8 +41,12 @@ func TestNav_ShowsAccountWhenLoggedIn(t *testing.T) {
 	pd := c.PageDataFor(config.Account{LoggedIn: true, Name: "Sam", Email: "sam@example.com"})
 	var b bytes.Buffer
 	_ = Page(pd, config.Meta{Title: "x"}, nil).Render(&b)
-	if !strings.Contains(b.String(), `href="/account"`) {
+	html := b.String()
+	if !strings.Contains(html, `href="/account"`) {
 		t.Error("logged-in nav should link to /account")
+	}
+	if !strings.Contains(html, `href="/logout"`) {
+		t.Error("logged-in nav account menu should offer Log out")
 	}
 }
 
