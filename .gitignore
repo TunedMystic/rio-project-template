@@ -11,3 +11,6 @@ bin/
 .notes/
 .misc/
 .tmp/
+
+# Superpowers scratch (SDD ledgers, brainstorm mockups)
+.superpowers/

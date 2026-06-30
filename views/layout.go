@@ -1,6 +1,8 @@
 package views
 
 import (
+	"strings"
+
 	"app/config"
 
 	"github.com/tunedmystic/rio/dom"
@@ -23,6 +25,7 @@ func Page(pd config.PageData, meta config.Meta, body ...dom.Node) dom.Node {
 			dom.Meta(dom.Name("description"), dom.Content(meta.Description)),
 			dom.Link(dom.Rel("icon"), dom.Href("/static/img/favicon.webp")),
 			pd.Tokens.StyleVars(),
+			themeVarsStyle(pd.ThemeVars),
 			dom.Link(dom.Rel("stylesheet"), dom.Href(cssHref(pd.AssetVersion))),
 		),
 		dom.Body(
@@ -54,4 +57,20 @@ func withClass(class string, children []dom.Node) []dom.Node {
 	out = append(out, dom.Class(class))
 	out = append(out, children...)
 	return out
+}
+
+// themeVarsStyle emits the extended theme CSS variables into :root, alongside
+// ui.Tokens.StyleVars (which the data/chart components read but Tokens does not
+// cover). No vendored code changes; this is a second :root block.
+func themeVarsStyle(vars []config.ThemeVar) dom.Node {
+	var b strings.Builder
+	b.WriteString(":root{")
+	for _, v := range vars {
+		b.WriteString(v.Name)
+		b.WriteString(":")
+		b.WriteString(v.Value)
+		b.WriteString(";")
+	}
+	b.WriteString("}")
+	return dom.StyleEl(dom.Raw(b.String()))
 }

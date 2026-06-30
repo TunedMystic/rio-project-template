@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 	"app/database"
 )
 
-func render(n interface{ Render(w *bytes.Buffer) error }) string {
+func render(n interface{ Render(w io.Writer) error }) string {
 	var b bytes.Buffer
 	_ = n.Render(&b)
 	return b.String()
@@ -38,6 +39,20 @@ func TestPage_RendersHeadAndChrome(t *testing.T) {
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("Page output missing %q", want)
+		}
+	}
+}
+
+func TestPage_EmitsExtendedThemeVars(t *testing.T) {
+	pd := testPageData()
+	meta := config.Meta{Title: "t", Description: "d"}
+	var b bytes.Buffer
+	_ = Page(pd, meta, nil).Render(&b)
+	html := b.String()
+
+	for _, want := range []string{"--color-ring:", "--chart-1:", "--color-on-danger:"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("Page output missing extended var %q", want)
 		}
 	}
 }
