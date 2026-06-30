@@ -43,7 +43,9 @@ func TestStatusBadges_RendersVariants(t *testing.T) {
 
 func TestAvatarGroup_RendersInitials(t *testing.T) {
 	html := render(avatarGroup([]string{"Ada Lovelace", "Grace Hopper"}))
-	if !strings.Contains(html, "A") || !strings.Contains(html, "G") {
-		t.Error("avatarGroup missing member initials")
+	for _, want := range []string{">A<", ">G<"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("avatarGroup missing rendered initial %q", want)
+		}
 	}
 }
