@@ -11,60 +11,66 @@ import (
 )
 
 func Home(pd config.PageData, meta config.Meta) dom.Node {
+	features := []featureItem{
+		{Icon: "layers", Title: "Component kit", Blurb: "A full set of token-driven, server-rendered components."},
+		{Icon: "message", Title: "Auth & billing", Blurb: "Email login, Google OAuth, and Stripe — already wired."},
+		{Icon: "check", Title: "Production floor", Blurb: "Tests, hardening, and accessibility from day one."},
+	}
+	plans := []plan{
+		{Name: "Starter", Price: "$0", Period: "/mo", Features: []string{"1 project", "Community support"}, CTA: ui.ButtonLink(ui.ButtonSecondary, "/login", "Get started")},
+		{Name: "Pro", Price: "$29", Period: "/mo", Features: []string{"Unlimited projects", "Priority support", "Analytics"}, Highlighted: true, CTA: ui.ButtonLink(ui.ButtonPrimary, "/login", "Start Pro")},
+		{Name: "Team", Price: "$99", Period: "/mo", Features: []string{"Everything in Pro", "SSO", "Audit log"}, CTA: ui.ButtonLink(ui.ButtonSecondary, "/login", "Contact us")},
+	}
+	faqs := []faqItem{
+		{Q: "Is it really no-JS?", A: "Yes — pages are server-rendered HTML; charts are inline SVG."},
+		{Q: "Can I change the theme?", A: "Set Theme: ThemeDusk in config.New and rebuild the CSS."},
+		{Q: "What's included?", A: "Auth, Google sign-in, Stripe billing, and this component kit."},
+	}
+
 	return Page(pd, meta,
-		// Hero — the page's thesis: a clean, ready-to-build starting point.
-		dom.Section(
-			dom.Class("py-16 sm:py-20"),
-			shell(
-				eyebrow("Project template"),
-				dom.H1(
-					dom.Class("mt-3 max-w-2xl text-4xl sm:text-5xl [font-weight:var(--font-weight-heading)] tracking-tight leading-[1.1] text-[var(--color-text)]"),
-					dom.Text("A clean starting point for your next app."),
-				),
-				dom.P(
-					dom.Class("mt-5 max-w-xl text-[length:var(--font-size-lg)] leading-relaxed text-[var(--color-text-muted)]"),
-					dom.Text("Server-rendered with rio/dom, themed with rio/ui, and backed by SQLite. Clone it, set your brand in one file, and start building."),
-				),
-				dom.Div(
-					dom.Class("mt-8 flex flex-wrap items-center gap-x-6 gap-y-3"),
-					ui.ButtonLink(ui.ButtonPrimary, "/messages", "Explore the demo"),
-					ghostLink("/about", "Read about it"),
-				),
-			),
-		),
+		hero("Project template",
+			"Clone it, set ProjectName, ship",
+			"A "+pd.SiteName+" starter with auth, billing, and a world-class component kit — server-rendered, no JS framework.",
+			ui.ButtonLink(ui.ButtonPrimary, "/messages", "Explore the demo"),
+			ghostLink("/kit", "Browse the kit"),
+			svgPanel()),
 
-		// Get started — the signature stepper, housed in a bordered card.
-		dom.Section(
-			dom.Class("pb-4"),
-			shell(
-				card(
-					ruledHeading("Get started in three steps"),
-					dom.Div(
-						dom.Class("mt-8"),
-						steps(
-							step{"1", "Clone", "Fork the template and open it."},
-							step{"2", "Configure", "Set ProjectName and your brand tokens."},
-							step{"3", "Build", "Run it and start shipping."},
-						),
-					),
-				),
-			),
-		),
+		logoCloud([]string{"Acme", "Globex", "Initech", "Umbrella", "Hooli"}),
 
-		// What's inside — the feature rows.
+		featureHighlight("Dashboard-ready",
+			"Data components that look the part",
+			"Metric cards, tables, and charts render on the server with tabular numerals and a tuned chart palette.",
+			false),
+
 		dom.Section(
 			dom.Class("py-12"),
-			shell(
-				sectionLabel("What's inside"),
-				dom.Div(
-					dom.Class("mt-5 grid gap-3 sm:grid-cols-2"),
-					featureRow("message", "Live SQLite demo", "Post a message and watch it persist.", "/messages"),
-					featureRow("layers", "Server-rendered UI", "Built with rio/dom and rio/ui — no templates.", "/about"),
-					featureRow("database", "Built-in migrations", "Embedded SQL runs at startup, forward-only.", "/about"),
-					featureRow("check", "One dependency", "Just modernc.org/sqlite beyond rio.", "/about"),
-				),
-			),
+			shell(dom.Div(
+				dom.Class("grid gap-4 sm:grid-cols-3"),
+				metricCard("Revenue", "$48.2k", 12.5, []int{12, 14, 13, 18, 22, 20, 26}),
+				metricCard("Active users", "3,182", 4.1, []int{30, 28, 33, 31, 35, 40, 44}),
+				metricCard("Uptime", "99.98%", 0.1, []int{40, 41, 40, 42, 41, 43, 44}),
+			)),
 		),
+
+		featureGrid(features),
+
+		dom.Section(
+			dom.Class("pt-8"),
+			shell(dom.Div(
+				dom.Class("mx-auto max-w-2xl text-center"),
+				eyebrow("Pricing"),
+				dom.H2(
+					dom.Class("mt-3 text-[length:var(--font-size-xl)] [font-weight:var(--font-weight-heading)] tracking-tight text-[var(--color-text)]"),
+					dom.Text("Simple, transparent pricing"),
+				),
+			)),
+		),
+		pricingTable(plans),
+
+		faq(faqs),
+
+		ctaBand("Ready to build?", "Clone the template and ship your idea this weekend.",
+			ui.ButtonLink(ui.ButtonPrimary, "/login", "Get started")),
 	)
 }
 
