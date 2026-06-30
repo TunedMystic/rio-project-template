@@ -42,6 +42,20 @@ func TestPage_RendersHeadAndChrome(t *testing.T) {
 	}
 }
 
+func TestPage_EmitsExtendedThemeVars(t *testing.T) {
+	pd := testPageData()
+	meta := config.Meta{Title: "t", Description: "d"}
+	var b bytes.Buffer
+	_ = Page(pd, meta, nil).Render(&b)
+	html := b.String()
+
+	for _, want := range []string{"--color-ring:", "--chart-1:", "--color-on-danger:"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("Page output missing extended var %q", want)
+		}
+	}
+}
+
 func TestMessages_ListsBodies(t *testing.T) {
 	pd := testPageData()
 	meta := config.Meta{Title: "Messages"}
