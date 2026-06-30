@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 	"app/database"
 )
 
-func render(n interface{ Render(w *bytes.Buffer) error }) string {
+func render(n interface{ Render(w io.Writer) error }) string {
 	var b bytes.Buffer
 	_ = n.Render(&b)
 	return b.String()
