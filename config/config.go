@@ -100,7 +100,7 @@ func New(buildEnv, buildHash string) Config {
 		Addr:         addrFromEnv(),
 		Debug:        debug,
 		AssetVersion: buildHash,
-		Tokens:       defaultTokens(),
+		Tokens:       ThemeSlateIndigo.Tokens(),
 		HeaderLinks: []Link{
 			{Text: "Messages", Href: "/messages"},
 			{Text: "About", Href: "/about"},
@@ -249,32 +249,3 @@ func (c Config) ProductByKey(key string) (Product, bool) {
 	return Product{}, false
 }
 
-// defaultTokens is the starter brand. Products edit this literal.
-func defaultTokens() ui.Tokens {
-	return ui.Tokens{
-		FontFamily:   `"Inter", ui-sans-serif, system-ui, sans-serif`,
-		FontSizeSm:   "16px",
-		FontSizeBase: "18px",
-		FontSizeLg:   "20px",
-		FontSizeXl:   "24px",
-		FontSize2xl:  "30px",
-		// A calm, warm palette: a single deep-teal accent on warm-stone
-		// neutrals, white cards floating on a soft cream canvas. Edit these
-		// to rebrand the whole app — every component reads these variables.
-		ColorPrimary:      "#0d9488", // vibrant teal
-		OnPrimary:         "#ffffff",
-		ColorSecondary:    "#57534e", // warm stone-600
-		OnSecondary:       "#ffffff",
-		ColorBackground:   "#fcfbf9", // near-white canvas (a whisper of warm)
-		ColorSurface:      "#ffffff", // white cards
-		ColorText:         "#1c1917", // stone-900
-		ColorTextMuted:    "#78716c", // stone-500
-		ColorBorder:       "#e7e5e4", // stone-200
-		ColorSuccess:      "#15803d",
-		ColorWarning:      "#b45309",
-		ColorDanger:       "#be123c",
-		ColorInfo:         "#0e7490",
-		RadiusBase:        "0.75rem",
-		FontWeightHeading: "700",
-	}
-}
