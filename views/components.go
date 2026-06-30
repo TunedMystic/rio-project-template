@@ -18,7 +18,7 @@ func navbar(pd config.PageData) dom.Node {
 		links = append(links, navLink(l))
 	}
 	if pd.Account.LoggedIn {
-		links = append(links, accountAvatar(pd.Account))
+		links = append(links, accountMenu(pd.Account))
 	} else {
 		links = append(links, navLink(config.Link{Text: "Log in", Href: "/login"}))
 	}
@@ -32,17 +32,46 @@ func navbar(pd config.PageData) dom.Node {
 	)
 }
 
-// accountAvatar links to the account area with a monogram of the user.
-func accountAvatar(a config.Account) dom.Node {
+// accountMenu is the monogram avatar that opens a no-JS dropdown (native
+// <details>) with account links and Log out.
+func accountMenu(a config.Account) dom.Node {
 	label := a.Email
 	if a.Name != "" {
 		label = a.Name
 	}
+	primary := "Account"
+	if a.Name != "" {
+		primary = a.Name
+	}
+	return dom.Details(
+		dom.Class("relative"),
+		// The summary IS the avatar; list-none + marker hide the disclosure triangle.
+		dom.Summary(
+			dom.Class("flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] text-[length:var(--font-size-sm)] font-bold marker:hidden [&::-webkit-details-marker]:hidden"),
+			dom.Title(label),
+			dom.Text(initial(label)),
+		),
+		dom.Div(
+			dom.Class("absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"),
+			dom.Div(
+				dom.Class("border-b border-[var(--color-border)] px-4 py-3"),
+				dom.P(dom.Class("truncate text-[length:var(--font-size-sm)] font-semibold text-[var(--color-text)]"), dom.Text(primary)),
+				dom.P(dom.Class("truncate text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text(a.Email)),
+			),
+			menuItem("/account", "Account settings"),
+			menuItem("/account/billing", "Billing"),
+			dom.Hr(dom.Class("my-1 border-[var(--color-border)]")),
+			menuItem("/logout", "Log out"),
+		),
+	)
+}
+
+// menuItem is one link row inside the account dropdown.
+func menuItem(href, label string) dom.Node {
 	return dom.A(
-		dom.Class("flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] text-[length:var(--font-size-sm)] font-bold"),
-		dom.Href("/account"),
-		dom.Title(label),
-		dom.Text(initial(label)),
+		dom.Class("block px-4 py-2 text-[length:var(--font-size-sm)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-primary)]/8 hover:text-[var(--color-primary)]"),
+		dom.Href(href),
+		dom.Text(label),
 	)
 }
 
