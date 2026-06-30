@@ -304,7 +304,7 @@ func Danger(pd config.PageData, meta config.Meta, av AccountView, email string) 
 				csrfInput(av.CSRF),
 				ui.TextField("confirm_email", "Confirm your email ("+email+")", "", ""),
 				dom.Button(dom.Type("submit"),
-					dom.Class("inline-flex items-center justify-center rounded-[var(--radius-base)] px-4 py-2.5 text-[length:var(--font-size-sm)] font-semibold bg-[var(--color-danger)] text-white shadow-sm hover:brightness-105 cursor-pointer"),
+					dom.Class("inline-flex items-center justify-center rounded-[var(--radius-base)] px-4 py-2.5 text-[length:var(--font-size-sm)] font-semibold bg-[var(--color-danger)] text-[var(--color-on-danger)] shadow-sm hover:brightness-105 cursor-pointer"),
 					dom.Text("Delete my account")),
 			),
 		),
