@@ -110,6 +110,7 @@ func New(buildEnv, buildHash string) Config {
 		FooterLinks: []Link{
 			{Text: "Home", Href: "/"},
 			{Text: "About", Href: "/about"},
+			{Text: "Kit", Href: "/kit"},
 			{Text: "Privacy Policy", Href: "/privacy-policy"},
 		},
 	}

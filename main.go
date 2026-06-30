@@ -67,6 +67,7 @@ func run() error {
 	s.Handle("/", HandleHome())
 	s.Handle("/messages", HandleMessages(store))
 	s.Handle("/about", HandleAbout())
+	s.Handle("/kit", HandleKit())
 	s.Handle("/privacy-policy", HandlePrivacyPolicy())
 	s.Handle("/version", HandleVersion())
 	s.Handle("/healthz", HandleHealth(db))
