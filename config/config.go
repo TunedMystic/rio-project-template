@@ -102,7 +102,7 @@ func New(buildEnv, buildHash string) Config {
 		Addr:         addrFromEnv(),
 		Debug:        debug,
 		AssetVersion: buildHash,
-		Theme:        ThemeDusk, // <-- compile-time preset; set ThemeDusk for dark
+		Theme:        ThemeSlateIndigo, // <-- compile-time preset; set ThemeDusk for dark
 		HeaderLinks: []Link{
 			{Text: "Messages", Href: "/messages"},
 			{Text: "About", Href: "/about"},
