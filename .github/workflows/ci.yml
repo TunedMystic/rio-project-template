@@ -21,7 +21,9 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test ./...
+        run: |
+          go test ./... -v -count=1 2>&1 | tee test.log
+          echo "Tests run: $(grep -c '^=== RUN' test.log)"
 
       - name: Build
         run: go build -o /dev/null .
