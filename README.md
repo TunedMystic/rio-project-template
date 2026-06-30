@@ -60,6 +60,29 @@ Edit the `Products` catalog in `config/config.go` to add/rename products (each i
 and put the printed `whsec_...` in `STRIPE_WEBHOOK_SECRET`. Use Stripe **test mode**
 keys/prices; the live consent round-trip can't be automated.
 
+## Theming
+
+The template ships with two compile-time theme presets, selected by one value in
+`config.New`:
+
+- **`ThemeSlateIndigo`** (default) — a light, indigo-on-slate look.
+- **`ThemeDusk`** — a dark, cyan-on-navy look.
+
+To switch, set the `Theme` field in `config.New`:
+
+```go
+Theme: ThemeDusk, // in config/config.go, inside New(...)
+```
+
+The selected preset builds `Config.Tokens` (the `:root` CSS variables every
+component reads) plus a small set of extended variables (`--color-ring`,
+`--color-on-danger`, `--color-surface-raised`, `--chart-1..--chart-4`) emitted by
+the layout. After changing the theme, rebuild the CSS with `make tailwind`.
+
+Every component in the system is shown under the active theme at **`/kit`** — use
+it as the live component reference. Components are token-driven only, so both
+presets render correctly without per-theme code.
+
 ## Build & deploy
 
 - `make tailwind` builds CSS (Tailwind v4; scans vendored rio/ui).
