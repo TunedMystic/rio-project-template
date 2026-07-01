@@ -20,3 +20,6 @@ bin/
 
 # Superpowers scratch (SDD ledgers, brainstorm mockups)
 .superpowers/
+
+# Playwright MCP browser-driving artifacts (snapshots, screenshots)
+.playwright-mcp/

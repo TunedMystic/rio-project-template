@@ -8,3 +8,4 @@ bin
 .misc
 .tmp
 data
+.playwright-mcp
