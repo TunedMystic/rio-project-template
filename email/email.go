@@ -9,9 +9,18 @@ import (
 	"net/http"
 )
 
-// Sender delivers a plain-text email.
+// Message is a single outbound email. HTML is the rich body; Text is the
+// plain-text fallback sent alongside it.
+type Message struct {
+	To      string
+	Subject string
+	HTML    string
+	Text    string
+}
+
+// Sender delivers an email.
 type Sender interface {
-	Send(ctx context.Context, to, subject, textBody string) error
+	Send(ctx context.Context, msg Message) error
 }
 
 // New returns a Postmark sender when a token is set, else a Console sender that
@@ -26,8 +35,8 @@ func New(token, from string) Sender {
 // Console logs emails instead of sending them.
 type Console struct{ Log *log.Logger }
 
-func (c Console) Send(ctx context.Context, to, subject, textBody string) error {
-	c.Log.Printf("[email] to=%s subject=%q\n%s", to, subject, textBody)
+func (c Console) Send(ctx context.Context, msg Message) error {
+	c.Log.Printf("[email] to=%s subject=%q\n%s", msg.To, msg.Subject, msg.Text)
 	return nil
 }
 
@@ -39,12 +48,13 @@ type Postmark struct {
 	Client  *http.Client
 }
 
-func (p Postmark) Send(ctx context.Context, to, subject, textBody string) error {
+func (p Postmark) Send(ctx context.Context, msg Message) error {
 	payload, _ := json.Marshal(map[string]string{
 		"From":          p.From,
-		"To":            to,
-		"Subject":       subject,
-		"TextBody":      textBody,
+		"To":            msg.To,
+		"Subject":       msg.Subject,
+		"HtmlBody":      msg.HTML,
+		"TextBody":      msg.Text,
 		"MessageStream": "outbound",
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.BaseURL+"/email", bytes.NewReader(payload))

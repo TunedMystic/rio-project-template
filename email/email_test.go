@@ -15,7 +15,7 @@ import (
 func TestConsole_LogsMessage(t *testing.T) {
 	var buf bytes.Buffer
 	c := Console{Log: log.New(&buf, "", 0)}
-	if err := c.Send(context.Background(), "to@example.com", "Subject", "Body link https://x/y"); err != nil {
+	if err := c.Send(context.Background(), Message{To: "to@example.com", Subject: "Subject", Text: "Body link https://x/y"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	out := buf.String()
@@ -37,7 +37,7 @@ func TestPostmark_PostsToAPI(t *testing.T) {
 	defer srv.Close()
 
 	p := Postmark{Token: "tok", From: "from@example.com", BaseURL: srv.URL, Client: srv.Client()}
-	if err := p.Send(context.Background(), "to@example.com", "Subj", "the body"); err != nil {
+	if err := p.Send(context.Background(), Message{To: "to@example.com", Subject: "Subj", HTML: "<b>hi</b>", Text: "the body"}); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 	if gotToken != "tok" {
@@ -45,5 +45,8 @@ func TestPostmark_PostsToAPI(t *testing.T) {
 	}
 	if gotBody["To"] != "to@example.com" || gotBody["From"] != "from@example.com" {
 		t.Errorf("body = %+v", gotBody)
+	}
+	if gotBody["HtmlBody"] != "<b>hi</b>" || gotBody["TextBody"] != "the body" {
+		t.Errorf("body missing HtmlBody/TextBody: %+v", gotBody)
 	}
 }

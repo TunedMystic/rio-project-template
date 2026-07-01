@@ -16,10 +16,10 @@ import (
 	"app/email"
 )
 
-type fakeSender struct{ lastBody string }
+type fakeSender struct{ lastMsg email.Message }
 
-func (f *fakeSender) Send(ctx context.Context, to, subject, textBody string) error {
-	f.lastBody = textBody
+func (f *fakeSender) Send(ctx context.Context, msg email.Message) error {
+	f.lastMsg = msg
 	return nil
 }
 
@@ -49,8 +49,8 @@ func TestHandleLogin_POST_IssuesAndSends(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login/sent?email=new%40example.com" {
 		t.Fatalf("status=%d loc=%q", rec.Code, rec.Header().Get("Location"))
 	}
-	if !strings.Contains(sender.lastBody, "/auth/verify?token=") {
-		t.Errorf("sent body missing verify link: %q", sender.lastBody)
+	if !strings.Contains(sender.lastMsg.Text, "/auth/verify?token=") {
+		t.Errorf("sent message missing verify link: %q", sender.lastMsg.Text)
 	}
 }
 
