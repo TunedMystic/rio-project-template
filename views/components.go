@@ -152,6 +152,38 @@ func footerLink(l config.Link) dom.Node {
 	)
 }
 
+// breadcrumbs renders a navigation trail: muted links separated by chevrons,
+// with the final crumb rendered as the bold current page (not a link).
+func breadcrumbs(trail []config.Link) dom.Node {
+	items := make([]dom.Node, 0, len(trail)*2+2)
+	items = append(items,
+		dom.Class("flex flex-wrap items-center gap-2 text-[length:var(--font-size-sm)]"),
+		dom.Aria("label", "Breadcrumb"),
+	)
+	for i, l := range trail {
+		if i > 0 {
+			items = append(items, dom.Span(
+				dom.Class("text-[var(--color-border)]"),
+				icon("chevron-right", 16),
+			))
+		}
+		if i == len(trail)-1 {
+			items = append(items, dom.Span(
+				dom.Class("font-semibold text-[var(--color-text)]"),
+				dom.Aria("current", "page"),
+				dom.Text(l.Text),
+			))
+		} else {
+			items = append(items, dom.A(
+				dom.Class("text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
+				dom.Href(l.Href),
+				dom.Text(l.Text),
+			))
+		}
+	}
+	return dom.Nav(items...)
+}
+
 // pageHeader is the band at the top of a page: a bold title and a one-line
 // muted subtitle, separated from the content by a hairline.
 func pageHeader(title, subtitle string) dom.Node {

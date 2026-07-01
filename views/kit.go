@@ -37,6 +37,11 @@ func Kit(pd config.PageData, meta config.Meta) dom.Node {
 		{Q: "How do I switch themes?", A: "Set Theme: ThemeDusk in config.New and rebuild."},
 		{Q: "Do the charts need JavaScript?", A: "No — they are pure server-rendered inline SVG."},
 	}
+	activity := []activityItem{
+		{Icon: "check", Title: "Invoice INV-1001 paid", Meta: "Acme Inc. · $1,200", Time: "2h ago", Variant: ui.BadgeSuccess},
+		{Icon: "database", Title: "Nightly backup completed", Meta: "System", Time: "6h ago", Variant: ui.BadgeNeutral},
+		{Icon: "message", Title: "New comment on project", Meta: "Ada Lovelace", Time: "1d ago", Variant: ui.BadgeWarning},
+	}
 
 	return Page(pd, meta,
 		pageHeader("Component Kit", "Every component in the design system, under the active theme."),
@@ -50,13 +55,18 @@ func Kit(pd config.PageData, meta config.Meta) dom.Node {
 		),
 
 		kitSection("Data & dashboard",
+			breadcrumbs([]config.Link{
+				{Text: "Home", Href: "#"},
+				{Text: "Dashboard", Href: "#"},
+				{Text: "Invoices", Href: "#"},
+			}),
 			dom.Div(
 				dom.Class("grid gap-4 sm:grid-cols-2 lg:grid-cols-3"),
 				metricCard("Revenue", "$48.2k", 12.5, []int{12, 14, 13, 18, 22, 20, 26}),
 				metricCard("Active users", "3,182", 4.1, []int{30, 28, 33, 31, 35, 40, 44}),
 				metricCard("Churn", "1.2%", -0.6, []int{9, 8, 8, 7, 6, 5, 5}),
 			),
-			dataTable([]string{"Invoice", "Customer", "Status", ""}, tableRows, "1–10 of 240"),
+			dataTable([]string{"Invoice", "Customer", "Status", ""}, tableRows, "1–10 of 240", 5, 20, "#"),
 			dom.Div(
 				dom.Class("grid gap-6 lg:grid-cols-2"),
 				dom.Div(
@@ -71,6 +81,7 @@ func Kit(pd config.PageData, meta config.Meta) dom.Node {
 					usageMeter("Seats", 7, 10),
 				),
 			),
+			activityFeed(activity),
 			emptyState("layers", "No projects yet", "Create your first project to see it here.", ui.ButtonLink(ui.ButtonPrimary, "#", "New project")),
 		),
 
