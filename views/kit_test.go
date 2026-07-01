@@ -8,6 +8,21 @@ import (
 	"app/config"
 )
 
+func TestKit_RendersDashboardBreadcrumbsAndActivity(t *testing.T) {
+	pd := testPageData()
+	meta := config.Meta{Title: "Kit"}
+	var b bytes.Buffer
+	_ = Kit(pd, meta).Render(&b)
+	html := b.String()
+
+	if !strings.Contains(html, `aria-label="Breadcrumb"`) {
+		t.Error("kit missing breadcrumbs demo")
+	}
+	if !strings.Contains(html, "Activity") {
+		t.Error("kit missing activity feed")
+	}
+}
+
 func TestKit_RendersAllSections(t *testing.T) {
 	pd := testPageData()
 	meta := config.Meta{Title: "Kit", Description: "d"}
