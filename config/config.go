@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/tunedmystic/rio/ui"
 )
@@ -86,6 +87,11 @@ type Config struct {
 	StripeSecretKey     string
 	StripeWebhookSecret string
 	Products            []Product
+
+	// Operational
+	SessionCleanupInterval time.Duration
+	TokenCleanupInterval   time.Duration
+	ErrorWebhookURL        string
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -131,6 +137,9 @@ func New(buildEnv, buildHash string) Config {
 		{Key: "pro", Name: "Pro", Kind: Subscription, PriceID: os.Getenv("STRIPE_PRICE_PRO")},
 		{Key: "ebook", Name: "E-book", Kind: OneTime, PriceID: os.Getenv("STRIPE_PRICE_EBOOK")},
 	}
+	c.SessionCleanupInterval = durationFromEnv("SESSION_CLEANUP_INTERVAL", time.Hour)
+	c.TokenCleanupInterval = durationFromEnv("TOKEN_CLEANUP_INTERVAL", time.Hour)
+	c.ErrorWebhookURL = os.Getenv("ERROR_WEBHOOK_URL")
 	return c
 }
 
@@ -211,6 +220,21 @@ func cmpOr(v, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// durationFromEnv parses key as a Go duration (e.g. "1h", "30m"), falling back
+// to def when unset or invalid (logging a warning in the invalid case).
+func durationFromEnv(key string, def time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		log.Printf("WARNING: invalid %s=%q; using %s", key, v, def)
+		return def
+	}
+	return d
 }
 
 // isTruthy returns true when v is "1", "true", or "yes" (case-insensitive).
