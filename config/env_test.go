@@ -26,11 +26,18 @@ func TestDurationFromEnv(t *testing.T) {
 }
 
 func TestNew_SetsOpsDefaults(t *testing.T) {
+	t.Setenv("SESSION_CLEANUP_INTERVAL", "")
+	t.Setenv("TOKEN_CLEANUP_INTERVAL", "")
+	t.Setenv("ERROR_WEBHOOK_URL", "")
+
 	c := New("debug", "hash")
 	if c.SessionCleanupInterval != time.Hour {
 		t.Errorf("SessionCleanupInterval = %s, want 1h", c.SessionCleanupInterval)
 	}
 	if c.TokenCleanupInterval != time.Hour {
 		t.Errorf("TokenCleanupInterval = %s, want 1h", c.TokenCleanupInterval)
+	}
+	if c.ErrorWebhookURL != "" {
+		t.Errorf("ErrorWebhookURL = %q, want empty string", c.ErrorWebhookURL)
 	}
 }
