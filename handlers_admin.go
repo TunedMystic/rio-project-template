@@ -98,6 +98,10 @@ func HandleAdminGrantEntitlement(store *database.Store) http.Handler {
 			http.NotFound(w, r)
 			return nil
 		}
+		if _, err := store.UserByID(r.Context(), id); err != nil {
+			http.NotFound(w, r)
+			return nil
+		}
 		key := r.FormValue("product_key")
 		if _, ok := Conf.ProductByKey(key); !ok {
 			http.Redirect(w, r, adminUserURL(id, "Unknown product"), http.StatusSeeOther)

@@ -82,12 +82,12 @@ func AdminUsers(pd config.PageData, meta config.Meta, query string, users []data
 		dom.Class("overflow-hidden rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)]"),
 		dom.Div(dom.Class("overflow-x-auto"),
 			dom.Table(dom.Class("w-full border-collapse"),
-				dom.Thead(head0(head)), dom.Tbody(rows[1:]...))),
+				dom.Thead(head), dom.Tbody(rows[1:]...))),
 	)
 
 	base := "/admin/users"
 	if query != "" {
-		base = "/admin/users?q=" + url.QueryEscape(query) + "&"
+		base = "/admin/users?q=" + url.QueryEscape(query)
 	}
 
 	body := []dom.Node{search, table}
@@ -99,9 +99,6 @@ func AdminUsers(pd config.PageData, meta config.Meta, query string, users []data
 	}
 	return adminShell(pd, meta, "Users", body...)
 }
-
-// head0 wraps the header row for Thead (kept separate so Tbody excludes it).
-func head0(tr dom.Node) dom.Node { return tr }
 
 func adminTh(label string) dom.Node {
 	return dom.Th(

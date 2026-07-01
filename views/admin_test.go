@@ -26,6 +26,16 @@ func TestAdminUsers_RendersRowsAndSearch(t *testing.T) {
 	if !strings.Contains(html, `aria-label="Pagination"`) {
 		t.Error("missing pagination")
 	}
+	// Pagination links must compose the query correctly: a single separator
+	// between the existing ?q= param and the &page= param. The dom library
+	// HTML-escapes & to &amp; inside attribute values.
+	if !strings.Contains(html, `href="/admin/users?q=ali&amp;page=2"`) {
+		t.Errorf("page-2 link missing or has wrong separator; want q=ali&amp;page=2 in href, got:\n%s", html)
+	}
+	// Regression guard: broken double-? must not appear.
+	if strings.Contains(html, "?q=ali&amp;?page") || strings.Contains(html, "??") {
+		t.Error("pagination link has double-? separator (broken URL composition)")
+	}
 }
 
 func TestAdminUserDetail_RendersActions(t *testing.T) {

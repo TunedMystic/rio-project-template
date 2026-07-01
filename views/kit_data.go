@@ -255,6 +255,16 @@ func pageWindow(current, total int) []int {
 	return out
 }
 
+// pageHref appends a page query param to base, choosing ? or & depending on
+// whether base already contains a query string.
+func pageHref(base string, page int) string {
+	sep := "?"
+	if strings.Contains(base, "?") {
+		sep = "&"
+	}
+	return fmt.Sprintf("%s%spage=%d", base, sep, page)
+}
+
 // pagination renders a numbered pager with Prev/Next controls. The current page
 // is a filled primary chip; other pages link to baseHref?page=N. Prev/Next
 // disable at the ends. A 0 from pageWindow renders as an ellipsis.
@@ -275,7 +285,7 @@ func pagination(current, total int, baseHref string) dom.Node {
 	}
 
 	if current > 1 {
-		kids = append(kids, pageLink(fmt.Sprintf("%s?page=%d", baseHref, current-1), "Prev", false))
+		kids = append(kids, pageLink(pageHref(baseHref, current-1), "Prev", false))
 	} else {
 		kids = append(kids, pageDisabled("Prev"))
 	}
@@ -290,14 +300,14 @@ func pagination(current, total int, baseHref string) dom.Node {
 			continue
 		}
 		kids = append(kids, pageLink(
-			fmt.Sprintf("%s?page=%d", baseHref, p),
+			pageHref(baseHref, p),
 			fmt.Sprintf("%d", p),
 			p == current,
 		))
 	}
 
 	if current < total {
-		kids = append(kids, pageLink(fmt.Sprintf("%s?page=%d", baseHref, current+1), "Next", false))
+		kids = append(kids, pageLink(pageHref(baseHref, current+1), "Next", false))
 	} else {
 		kids = append(kids, pageDisabled("Next"))
 	}
