@@ -21,6 +21,7 @@ func testEmailContext() EmailContext {
 			ColorBackground: "#f4f5f7",
 			ColorBorder:     "#e2e8f0",
 			RadiusBase:      "0.5rem",
+			FontFamily:      `"Inter", ui-sans-serif, system-ui, sans-serif`,
 		},
 	}
 }
@@ -30,7 +31,7 @@ func TestLoginEmail(t *testing.T) {
 	if subject == "" {
 		t.Error("empty subject")
 	}
-	for _, want := range []string{"<!doctype html>", "Testco", "https://x/auth/verify?token=ABC", "#4f46e5", "style="} {
+	for _, want := range []string{"<!doctype html>", "Testco", "https://x/auth/verify?token=ABC", "#4f46e5", "style=", "font-family:", "sans-serif"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("login html missing %q", want)
 		}

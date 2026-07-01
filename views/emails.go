@@ -35,13 +35,13 @@ func emailLayout(ec EmailContext, inner ...dom.Node) dom.Node {
 
 	header := dom.Tr(dom.Td(
 		dom.Style("padding:24px 28px;border-bottom:1px solid "+t.ColorBorder),
-		dom.Span(dom.Style("font-weight:700;font-size:18px;color:"+t.ColorPrimary), dom.Text(ec.SiteName)),
+		dom.Span(dom.Style("font-weight:700;font-size:20px;color:"+t.ColorPrimary+";font-family:"+t.FontFamily), dom.Text(ec.SiteName)),
 	))
 
 	bodyTd := dom.Td(append([]dom.Node{dom.Style("padding:28px")}, inner...)...)
 
 	footer := dom.Tr(dom.Td(
-		dom.Style("padding:20px 28px;border-top:1px solid "+t.ColorBorder+";color:"+t.ColorTextMuted+";font-size:12px"),
+		dom.Style("padding:20px 28px;border-top:1px solid "+t.ColorBorder+";color:"+t.ColorTextMuted+";font-size:13px;font-family:"+t.FontFamily),
 		dom.Text("Sent by "+ec.SiteName),
 	))
 
@@ -65,20 +65,20 @@ func emailLayout(ec EmailContext, inner ...dom.Node) dom.Node {
 			dom.Meta(dom.Name("viewport"), dom.Content("width=device-width,initial-scale=1")),
 			dom.TitleEl(dom.Text(ec.SiteName)),
 		),
-		dom.Body(dom.Style("margin:0;padding:0;background:"+t.ColorBackground), outer),
+		dom.Body(dom.Style("margin:0;padding:0;background:"+t.ColorBackground+";font-family:"+t.FontFamily), outer),
 	)
 }
 
 func emailHeading(ec EmailContext, text string) dom.Node {
 	return dom.H1(
-		dom.Style("margin:0 0 16px;font-size:22px;font-weight:700;color:"+ec.Tokens.ColorText),
+		dom.Style("margin:0 0 16px;font-size:24px;font-weight:700;color:"+ec.Tokens.ColorText+";font-family:"+ec.Tokens.FontFamily),
 		dom.Text(text),
 	)
 }
 
 func emailParagraph(ec EmailContext, text string) dom.Node {
 	return dom.P(
-		dom.Style("margin:0 0 16px;font-size:15px;line-height:1.6;color:"+ec.Tokens.ColorText),
+		dom.Style("margin:0 0 16px;font-size:16px;line-height:1.6;color:"+ec.Tokens.ColorText+";font-family:"+ec.Tokens.FontFamily),
 		dom.Text(text),
 	)
 }
@@ -89,7 +89,7 @@ func emailButton(ec EmailContext, href, label string) dom.Node {
 		dom.Style("margin:24px 0"),
 		dom.A(
 			dom.Href(href),
-			dom.Style("display:inline-block;padding:12px 20px;background:"+t.ColorPrimary+";color:"+t.OnPrimary+";text-decoration:none;font-weight:600;border-radius:"+t.RadiusBase),
+			dom.Style("display:inline-block;padding:13px 22px;background:"+t.ColorPrimary+";color:"+t.OnPrimary+";text-decoration:none;font-weight:600;font-size:16px;border-radius:"+t.RadiusBase+";font-family:"+t.FontFamily),
 			dom.Text(label),
 		),
 	)
@@ -103,7 +103,7 @@ func LoginEmail(ec EmailContext, link string) (subject, html, text string) {
 		emailParagraph(ec, "Click the button below to sign in. This link expires in 15 minutes."),
 		emailButton(ec, link, "Log in"),
 		emailParagraph(ec, "If the button doesn't work, copy and paste this link:"),
-		dom.P(dom.Style("margin:0;font-size:13px;word-break:break-all;color:"+ec.Tokens.ColorTextMuted), dom.Text(link)),
+		dom.P(dom.Style("margin:0;font-size:14px;word-break:break-all;color:"+ec.Tokens.ColorTextMuted+";font-family:"+ec.Tokens.FontFamily), dom.Text(link)),
 	)
 	html = emailDoc(doc)
 	text = "Sign in to " + ec.SiteName + "\n\nClick to log in (expires in 15 minutes):\n\n" + link + "\n"
