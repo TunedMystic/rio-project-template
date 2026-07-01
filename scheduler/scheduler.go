@@ -76,8 +76,7 @@ func (s *Scheduler) runOnce(ctx context.Context, job Job) {
 		s.logger.Error("scheduler: job failed",
 			slog.String("job", job.Name), slog.String("err", err.Error()))
 		s.reporter.Report(ctx, report.Event{
-			Message: "scheduler job failed: " + job.Name,
-			Err:     err.Error(),
+			Message: "scheduler job failed: " + job.Name + ": " + err.Error(),
 		})
 	}
 }

@@ -31,7 +31,6 @@ func RequestIDFromContext(ctx context.Context) string {
 // Event is a single reportable error occurrence.
 type Event struct {
 	Message   string `json:"message"`
-	Err       string `json:"error,omitempty"`
 	Stack     string `json:"stack,omitempty"`
 	RequestID string `json:"request_id,omitempty"`
 	Method    string `json:"method,omitempty"`
@@ -88,17 +87,4 @@ func (w Webhook) Report(_ context.Context, e Event) {
 	}
 	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
-}
-
-// Capture reports err as an event, enriching it with the request id from ctx.
-// It is a no-op when err or r is nil.
-func Capture(ctx context.Context, r Reporter, err error) {
-	if err == nil || r == nil {
-		return
-	}
-	r.Report(ctx, Event{
-		Message:   err.Error(),
-		Err:       err.Error(),
-		RequestID: RequestIDFromContext(ctx),
-	})
 }
