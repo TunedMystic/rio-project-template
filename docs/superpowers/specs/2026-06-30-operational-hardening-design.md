@@ -9,14 +9,17 @@ Close the four highest-value operational gaps that stand between this template
 and running a real SaaS in production, without breaking its "single binary,
 scratch image, optional env-gated features" philosophy:
 
-1. **Background scheduler** — an in-process job runner.
-2. **SQLite snapshots + Litestream docs** — a data durability story.
+1. **Background scheduler** — an in-process job runner (cleanup jobs).
+2. **Litestream backup docs** — a data durability story.
 3. **Pluggable error reporter + request IDs** — production error visibility.
 4. **`.env.example`** — a complete, committed config template.
 
 Chosen approaches (from brainstorming):
-- Backups: **built-in local snapshot** (always-on, zero deps) **plus documented
-  Litestream** sidecar for offsite/point-in-time replication.
+- Backups: **Litestream** (docs + compose sidecar) is the single backup story —
+  continuous offsite replication with point-in-time restore. There is **no
+  built-in snapshot code**: a scheduled `VACUUM INTO` would be redundant with
+  Litestream and, writing to the same volume as the DB, weak against the volume
+  loss that is the real disaster.
 - Errors: **pluggable reporter interface** (Nop default + optional Webhook impl),
   env-gated like Google/Stripe, wired via app-level middleware; **plus per-request
   IDs**.
@@ -29,9 +32,8 @@ transactional email breadth, teams/orgs, public API. Do not add these here.
 
 ## Global constraints
 
-- **Zero new Go module dependencies.** Snapshots use SQL (`VACUUM INTO`), request
-  IDs use `crypto/rand`, the webhook reporter uses `net/http`. Litestream is
-  external (docs/compose only).
+- **Zero new Go module dependencies.** Request IDs use `crypto/rand`, the webhook
+  reporter uses `net/http`. Litestream is external (docs/compose only).
 - Preserve the scratch single-binary deploy. Nothing may require CGO or a shell
   in the runtime image.
 - New features are **optional and env-gated**, matching the existing Google/Stripe
@@ -69,7 +71,7 @@ func (s *Scheduler) Start(ctx context.Context) // launches one goroutine per job
   `reporter.Report(ctx, ...)`.
 - Each goroutine returns when `ctx.Done()` fires (shutdown), stopping its ticker.
 - Jobs do **not** run immediately on `Start` (first run is after one interval),
-  keeping startup fast and avoiding a snapshot on every deploy.
+  keeping startup fast and avoiding a burst of cleanup work on every deploy.
 - `Add` with `Interval <= 0` is a silent no-op, so a job is disabled purely by
   configuring its interval to `0`.
 
@@ -82,10 +84,6 @@ sched.Add(scheduler.Job{Name: "sessions-cleanup", Interval: Conf.SessionCleanupI
     Run: func(ctx context.Context) error { return store.DeleteExpiredSessions(ctx) }})
 sched.Add(scheduler.Job{Name: "tokens-cleanup", Interval: Conf.TokenCleanupInterval,
     Run: func(ctx context.Context) error { return store.DeleteExpiredTokens(ctx) }})
-sched.Add(scheduler.Job{Name: "db-snapshot", Interval: Conf.BackupInterval,
-    Run: func(ctx context.Context) error {
-        return database.Snapshot(ctx, db, Conf.BackupDir, Conf.BackupRetain)
-    }})
 sched.Start(ctx)
 ```
 
@@ -96,52 +94,34 @@ env overrides and defaults:
 |-------|-----|---------|
 | `SessionCleanupInterval` | `SESSION_CLEANUP_INTERVAL` | `1h` |
 | `TokenCleanupInterval` | `TOKEN_CLEANUP_INTERVAL` | `1h` |
-| `BackupInterval` | `BACKUP_INTERVAL` | `24h` |
-| `BackupDir` | `BACKUP_DIR` | `<DB_DIR>/backups` |
-| `BackupRetain` | `BACKUP_RETAIN` | `7` |
 
 Durations are parsed with `time.ParseDuration`; on parse failure, log a warning
-and fall back to the default. `BackupRetain` parsed with `strconv.Atoi`, same
-fallback. A new helper `durationFromEnv(key string, def time.Duration)
-time.Duration` and `intFromEnv(key string, def int) int` live in `config`
-alongside the existing env helpers.
+and fall back to the default. A new helper `durationFromEnv(key string, def
+time.Duration) time.Duration` lives in `config` alongside the existing env
+helpers.
 
 ---
 
-## Component 2: SQLite snapshots + Litestream docs
+## Component 2: Litestream backup docs (no code)
 
-### `database.Snapshot`
+Backups are handled entirely by Litestream, documented and configured — no Go
+code. This is the single, professional backup story: continuous WAL replication
+to S3-compatible storage with point-in-time restore.
 
-Add to the `database` package (new file `database/backup.go`):
-
-```go
-// Snapshot writes a consistent copy of the database to destDir via
-// VACUUM INTO, then prunes older snapshots so at most retain remain.
-func Snapshot(ctx context.Context, db *sql.DB, destDir string, retain int) error
-```
-
-- `os.MkdirAll(destDir, 0o755)`.
-- Build a filename `snapshot-<RFC3339-with-safe-chars>.db` (colons replaced so
-  the name is filesystem-safe on all platforms).
-- Execute `VACUUM INTO ?` bound to the full path. `VACUUM INTO` produces a
-  transactionally consistent snapshot even with WAL active, and works on the
-  cgo-free `modernc.org/sqlite` driver.
-- Prune: list files matching `snapshot-*.db` in `destDir`, sort by name
-  (RFC3339 sorts lexicographically = chronologically), delete all but the newest
-  `retain`. If `retain <= 0`, keep all.
-- Return wrapped errors (`fmt.Errorf("...: %w", err)`); never panic.
-
-### Litestream docs (no code)
-
-- `docs/deploy/litestream.md` — when/why to use Litestream on top of the built-in
-  snapshots (continuous replication + point-in-time restore to S3-compatible
-  storage), and restore instructions.
+- `docs/deploy/litestream.md` — what Litestream is and why it is the backup story
+  for this stack (continuous replication, seconds-level RPO, offsite, point-in-time
+  restore), how to configure it, and step-by-step **restore** instructions
+  (including restoring into the `/data` volume before the app starts).
 - `litestream.yml` (repo root, example) — a minimal config replicating
-  `/data/<ProjectName>.db` to an S3 bucket, with placeholder credentials.
+  `/data/<ProjectName>.db` to an S3 bucket, with placeholder credentials/paths.
 - `docker-compose.yml` (repo root, example) — two services sharing the `/data`
   volume: the app (scratch image) and a `litestream/litestream` sidecar running
-  `litestream replicate`. Documents that Litestream cannot run inside the scratch
-  image and therefore runs as a separate container.
+  `litestream replicate`. Explicitly documents that Litestream cannot run inside
+  the scratch image and therefore runs as a separate container. Include a commented
+  note on the restore-on-boot pattern (`litestream restore` before the app comes
+  up on a fresh volume).
+
+No changes to the `database` package for backups.
 
 ---
 
@@ -249,7 +229,7 @@ by concern, with dev-safe blank/placeholder values:
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`,
   `STRIPE_PRICE_EBOOK`.
 - Ops (new): `SESSION_CLEANUP_INTERVAL`, `TOKEN_CLEANUP_INTERVAL`,
-  `BACKUP_INTERVAL`, `BACKUP_DIR`, `BACKUP_RETAIN`, `ERROR_WEBHOOK_URL`.
+  `ERROR_WEBHOOK_URL`.
 
 `.env.example` is committed; ensure `.env` (real secrets) is git-ignored (add to
 `.gitignore` if not already present).
@@ -264,10 +244,6 @@ Follow the existing table-driven style and test helpers.
   stops when the context is cancelled (signal via a channel/counter); a job with
   `Interval <= 0` is never scheduled; a panicking job is recovered and does not
   stop the scheduler.
-- **database.Snapshot:** against a temp DB in a temp dir — creates a snapshot
-  file; a second call with `retain = 1` leaves exactly one file (older pruned);
-  `retain <= 0` keeps all. Verify the snapshot file is a valid, openable SQLite
-  database.
 - **report.Webhook:** posts correct JSON to an `httptest.Server` (assert body
   fields); a transport error is swallowed (no panic). **report.Nop:** no-op.
   **report.Capture:** builds an event and calls the reporter.
@@ -284,6 +260,7 @@ Follow the existing table-driven style and test helpers.
 - No immediate-on-start job execution (first run after one interval).
 - No retry/backoff in the scheduler or webhook reporter (best-effort; log and
   move on).
-- No Litestream Go code, embedding, or shelling out.
+- No built-in backup/snapshot code — Litestream (external) is the entire backup
+  story; no Go code, embedding, or shelling out for backups.
 - No stack traces for non-panic handler errors (only panics carry stacks).
 - No CSP, global rate limiting, admin panel, or email breadth (Tier 2).
