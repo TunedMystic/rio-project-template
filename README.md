@@ -96,6 +96,9 @@ Every component in the system is shown under the active theme at **`/kit`** — 
 it as the live component reference. Components are token-driven only, so both
 presets render correctly without per-theme code.
 
+In dev (`make run`), visit `/pages` for an index of every page in the template,
+and `/dev/emails` to preview the email templates. Both are dev-only.
+
 ## Build & deploy
 
 - `make tailwind` builds CSS (Tailwind v4; scans vendored rio/ui).

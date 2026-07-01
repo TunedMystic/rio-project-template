@@ -133,8 +133,10 @@ func run() error {
 		s.Handle("/guide", auth.RequireUser(auth.RequireEntitlement(store, "ebook")(HandleGuide())))
 	}
 
-	// Email previews (dev only): visit /dev/emails to iterate on email branding.
+	// Dev-only pages: /pages indexes every page in the template; /dev/emails
+	// previews the email templates.
 	if Conf.Debug {
+		s.Handle("/pages", HandlePages())
 		s.Handle("/dev/emails", HandleDevEmails())
 		s.Handle("GET /dev/emails/{name}", HandleDevEmailPreview())
 	}

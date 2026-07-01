@@ -134,6 +134,49 @@ func Terms(pd config.PageData, meta config.Meta) dom.Node {
 	)
 }
 
+// PageLink is one entry in the pages index.
+type PageLink struct{ Label, Href, Note string }
+
+// PageGroup is a titled group of links in the pages index.
+type PageGroup struct {
+	Title string
+	Links []PageLink
+}
+
+// Pages renders a grouped index of the template's pages (a dev-only reference).
+func Pages(pd config.PageData, meta config.Meta, groups []PageGroup) dom.Node {
+	cards := make([]dom.Node, 0, len(groups))
+	for _, g := range groups {
+		rows := make([]dom.Node, 0, len(g.Links)+1)
+		rows = append(rows, ruledHeading(g.Title))
+		list := make([]dom.Node, 0, len(g.Links))
+		for _, l := range g.Links {
+			row := []dom.Node{
+				dom.Class("flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2"),
+				dom.A(
+					dom.Class("font-medium text-[var(--color-primary)] hover:underline"),
+					dom.Href(l.Href),
+					dom.Text(l.Label),
+				),
+				dom.Span(dom.Class("text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"), dom.Text(l.Href)),
+			}
+			if l.Note != "" {
+				row = append(row, dom.Span(
+					dom.Class("text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"),
+					dom.Text("· "+l.Note),
+				))
+			}
+			list = append(list, dom.Div(row...))
+		}
+		rows = append(rows, dom.Div(withClass("mt-2 divide-y divide-[var(--color-border)]", list)...))
+		cards = append(cards, card(rows...))
+	}
+	return Page(pd, meta,
+		pageHeader("Pages", "Every page in this template — a dev-only index."),
+		dom.Section(dom.Class("py-12"), shell(dom.Div(withClass("max-w-2xl space-y-6", cards)...))),
+	)
+}
+
 func NotFound(pd config.PageData, meta config.Meta) dom.Node {
 	return Page(pd, meta,
 		dom.Section(
