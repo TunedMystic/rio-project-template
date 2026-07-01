@@ -25,4 +25,11 @@ func TestActivityFeed_RendersItems(t *testing.T) {
 	if !strings.Contains(html, "rounded-full") {
 		t.Error("activityFeed missing round dot marker")
 	}
+	// Tinted-fill dot uses color-mix so the icon is legible in both themes.
+	if !strings.Contains(html, "color-mix") {
+		t.Error("activityFeed dot missing color-mix tinted background")
+	}
+	if !strings.Contains(html, "var(--color-success)") {
+		t.Error("activityFeed dot missing success token color")
+	}
 }

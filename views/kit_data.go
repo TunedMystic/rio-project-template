@@ -284,6 +284,7 @@ func pagination(current, total int, baseHref string) dom.Node {
 		if p == 0 {
 			kids = append(kids, dom.Span(
 				dom.Class("px-2 text-[var(--color-text-muted)]"),
+				dom.Aria("hidden", "true"),
 				dom.Text("…"),
 			))
 			continue

@@ -35,12 +35,13 @@ func activityFeed(items []activityItem) dom.Node {
 	rail := make([]dom.Node, 0, len(items)+1)
 	rail = append(rail, dom.Class("relative flex flex-col gap-6 border-l border-[var(--color-border)] pl-6"))
 	for _, it := range items {
+		c := dotColor(it.Variant)
 		rail = append(rail, dom.Div(
 			dom.Class("relative"),
 			// Dot marker straddling the rail; colored by variant.
 			dom.Div(
-				dom.Class("absolute -left-[37px] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-sm"),
-				dom.Style("background-color:"+dotColor(it.Variant)),
+				dom.Class("absolute -left-[37px] flex h-6 w-6 items-center justify-center rounded-full shadow-sm"),
+				dom.Style("color:"+c+";background-color:color-mix(in srgb, "+c+" 15%, transparent)"),
 				icon(it.Icon, 13),
 			),
 			dom.Div(
