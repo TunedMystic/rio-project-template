@@ -56,7 +56,7 @@ func Kit(pd config.PageData, meta config.Meta) dom.Node {
 				metricCard("Active users", "3,182", 4.1, []int{30, 28, 33, 31, 35, 40, 44}),
 				metricCard("Churn", "1.2%", -0.6, []int{9, 8, 8, 7, 6, 5, 5}),
 			),
-			dataTable([]string{"Invoice", "Customer", "Status", ""}, tableRows, "1–10 of 240"),
+			dataTable([]string{"Invoice", "Customer", "Status", ""}, tableRows, "1–10 of 240", 5, 20, "#"),
 			dom.Div(
 				dom.Class("grid gap-6 lg:grid-cols-2"),
 				dom.Div(

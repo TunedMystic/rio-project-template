@@ -92,7 +92,7 @@ func sparkline(data []int) dom.Node {
 
 // dataTable renders a header, body rows with status badges + a row-action menu,
 // hairline rows, and a pagination footer.
-func dataTable(cols []string, rows []tableRow, rangeLabel string) dom.Node {
+func dataTable(cols []string, rows []tableRow, rangeLabel string, current, total int, baseHref string) dom.Node {
 	headCells := make([]dom.Node, 0, len(cols)+1)
 	headCells = append(headCells, dom.Class("border-b border-[var(--color-border)]"))
 	for _, c := range cols {
@@ -130,11 +130,7 @@ func dataTable(cols []string, rows []tableRow, rangeLabel string) dom.Node {
 		dom.Div(
 			dom.Class("flex items-center justify-between border-t border-[var(--color-border)] px-4 py-3 text-[length:var(--font-size-sm)] text-[var(--color-text-muted)]"),
 			dom.Span(dom.Text(rangeLabel)),
-			dom.Div(
-				dom.Class("flex items-center gap-2"),
-				ui.Button(ui.ButtonGhost, "Prev"),
-				ui.Button(ui.ButtonGhost, "Next"),
-			),
+			pagination(current, total, baseHref),
 		),
 	)
 }

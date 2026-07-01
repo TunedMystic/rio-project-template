@@ -32,7 +32,7 @@ func TestDataTable_RendersBadgesAndPagination(t *testing.T) {
 		{Cells: []string{"INV-001", "Acme"}, Status: "Paid", Variant: ui.BadgeSuccess},
 		{Cells: []string{"INV-002", "Globex"}, Status: "Overdue", Variant: ui.BadgeDanger},
 	}
-	html := render(dataTable([]string{"Invoice", "Customer", "Status", ""}, rows, "1–10 of 240"))
+	html := render(dataTable([]string{"Invoice", "Customer", "Status", ""}, rows, "1–10 of 240", 5, 20, "#"))
 	if !strings.Contains(html, "Paid") || !strings.Contains(html, "Overdue") {
 		t.Error("dataTable missing status badges")
 	}
@@ -44,6 +44,9 @@ func TestDataTable_RendersBadgesAndPagination(t *testing.T) {
 	}
 	if !strings.Contains(html, "Prev") || !strings.Contains(html, "Next") {
 		t.Error("dataTable missing Prev/Next controls")
+	}
+	if !strings.Contains(html, `aria-current="page"`) {
+		t.Error("dataTable footer missing numbered pagination")
 	}
 }
 
