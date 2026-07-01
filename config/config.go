@@ -92,6 +92,7 @@ type Config struct {
 	SessionCleanupInterval time.Duration
 	TokenCleanupInterval   time.Duration
 	ErrorWebhookURL        string
+	AdminEmails            []string
 }
 
 // New builds the Config. buildEnv comes from the main package's build-time var
@@ -140,6 +141,7 @@ func New(buildEnv, buildHash string) Config {
 	c.SessionCleanupInterval = durationFromEnv("SESSION_CLEANUP_INTERVAL", time.Hour)
 	c.TokenCleanupInterval = durationFromEnv("TOKEN_CLEANUP_INTERVAL", time.Hour)
 	c.ErrorWebhookURL = os.Getenv("ERROR_WEBHOOK_URL")
+	c.AdminEmails = csvEnv("ADMIN_EMAILS")
 	return c
 }
 
@@ -235,6 +237,23 @@ func durationFromEnv(key string, def time.Duration) time.Duration {
 		return def
 	}
 	return d
+}
+
+// csvEnv reads key as a comma-separated list, trimming and lowercasing each
+// item and dropping empties. Returns an empty slice when unset.
+func csvEnv(key string) []string {
+	raw := os.Getenv(key)
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if v := strings.ToLower(strings.TrimSpace(p)); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // isTruthy returns true when v is "1", "true", or "yes" (case-insensitive).
