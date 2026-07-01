@@ -19,8 +19,8 @@ RUN apk add --no-cache upx
 COPY . .
 RUN go build -mod=vendor \
     -ldflags="-s -w -X 'main.BuildHash=$BUILD_HASH' -X 'main.BuildDate=$(date)'" \
-    -o app .
-RUN upx /build/app
+    -o bin/app .
+RUN upx /build/bin/app
 
 
 # ----------------------------------------------------
@@ -32,7 +32,7 @@ FROM scratch AS final
 
 WORKDIR /x
 
-COPY --from=builder /build/app .
+COPY --from=builder /build/bin/app /x/bin/app
 
 # SQLite database directory (mount a volume here to persist:
 #   docker run -v ./data:/data ...). DB file is /data/<ProjectName>.db.
@@ -43,4 +43,4 @@ ENV DB_DIR=/data
 # STRIPE_PRICE_PRO, STRIPE_PRICE_EBOOK.
 EXPOSE 3000
 
-CMD ["/x/app"]
+CMD ["/x/bin/app"]
