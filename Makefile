@@ -35,7 +35,9 @@ check:
 ## @(app) - 🗑️ Delete the local dev database
 db-reset:
 	@echo "✨🗑️✨ Removing local database\n"
-	@rm -f ./*.db ./*.db-shm ./*.db-wal
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+		dir="$${DB_DIR:-data}"; \
+		rm -f "$$dir"/*.db "$$dir"/*.db-shm "$$dir"/*.db-wal ./*.db ./*.db-shm ./*.db-wal
 
 
 ## @(app) - ✨ Remove temp files and dirs
