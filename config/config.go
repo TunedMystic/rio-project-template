@@ -159,14 +159,15 @@ func addrFromEnv() string {
 }
 
 // DBPath derives the SQLite file path from the project name. The directory is
-// DB_DIR (default /data in prod, the working dir in dev), the file is
-// <projectName>.db — keeping each project's database unique on a shared volume.
+// DB_DIR (default /data in prod, ./data in dev), the file is <projectName>.db —
+// keeping each project's database unique on a shared volume. The directory is
+// created on open if missing (see database.Open).
 func DBPath(projectName string, debug bool) string {
 	dir := os.Getenv("DB_DIR")
 	if dir == "" {
 		dir = "/data"
 		if debug {
-			dir = "."
+			dir = "data"
 		}
 	}
 	return filepath.Join(dir, projectName+".db")

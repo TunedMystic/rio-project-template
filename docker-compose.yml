@@ -1,6 +1,7 @@
-# Example local deployment: the app with a persistent /data volume for its
-# SQLite database. Backups are handled out-of-band in production (see
-# docs/deploy/litestream.md), not by this compose file.
+# Example local deployment: the app with its SQLite database bind-mounted to
+# ./data — the same directory the dev server (`make run`) uses — so there is one
+# canonical location for the database and no ambiguity between runs. Backups are
+# handled out-of-band in production (see docs/deploy/litestream.md), not here.
 services:
   app:
     build:
@@ -8,12 +9,12 @@ services:
       args:
         BUILD_HASH: dev
     environment:
+      # APP_SECRET is required; replace this placeholder before any real deploy.
       APP_SECRET: change-me-in-prod
+      # SQLite lives at /data in the container, bind-mounted to ./data on the host.
       DB_DIR: /data
+      EMAIL_FROM: noreply@localhost
     volumes:
-      - data:/data
+      - ./data:/data
     ports:
       - "3000:3000"
-
-volumes:
-  data:
