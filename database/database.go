@@ -17,19 +17,17 @@ func Open(path string) (*sql.DB, error) {
 			return nil, err
 		}
 	}
-	db, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)")
+	// All pragmas go in the DSN so the driver applies them to every new
+	// connection. journal_mode=WAL persists in the file, but foreign_keys and
+	// synchronous are per-connection — setting them here (rather than a one-off
+	// Exec) keeps them correct even if the pool ever opens a fresh connection.
+	dsn := path + "?_pragma=busy_timeout(5000)" +
+		"&_pragma=journal_mode(WAL)" +
+		"&_pragma=foreign_keys(on)" +
+		"&_pragma=synchronous(normal)"
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
-	}
-	for _, pragma := range []string{
-		"PRAGMA journal_mode = WAL",
-		"PRAGMA foreign_keys = ON",
-		"PRAGMA synchronous = NORMAL",
-	} {
-		if _, err := db.Exec(pragma); err != nil {
-			db.Close()
-			return nil, err
-		}
 	}
 	db.SetMaxOpenConns(1) // simplest correct default for SQLite writes
 	return db, nil
