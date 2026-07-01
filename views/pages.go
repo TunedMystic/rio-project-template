@@ -200,7 +200,21 @@ func NotFound(pd config.PageData, meta config.Meta) dom.Node {
 	)
 }
 
-func Messages(pd config.PageData, meta config.Meta, msgs []database.Message, bodyValue, bodyErr string) dom.Node {
+func Messages(pd config.PageData, meta config.Meta, msgs []database.Message, bodyValue, bodyErr, notice string) dom.Node {
+	formCard := []dom.Node{ruledHeading("Add a message")}
+	if notice != "" {
+		formCard = append(formCard, dom.Div(dom.Class("mt-4"), ui.Alert(ui.AlertWarning, dom.Text(notice))))
+	}
+	formCard = append(formCard,
+		dom.Form(
+			dom.Method("post"),
+			dom.Action("/messages"),
+			dom.Class("mt-6"),
+			Honeypot(),
+			ui.TextField("body", "Message", bodyValue, bodyErr),
+			submitButton("Add message"),
+		),
+	)
 	return Page(pd, meta,
 		pageHeader("Messages", "A SQLite-backed demo. Add a message and it persists across restarts."),
 		dom.Section(
@@ -211,16 +225,7 @@ func Messages(pd config.PageData, meta config.Meta, msgs []database.Message, bod
 
 					// Left: the form, then the recent messages.
 					dom.Div(
-						card(
-							ruledHeading("Add a message"),
-							dom.Form(
-								dom.Method("post"),
-								dom.Action("/messages"),
-								dom.Class("mt-6"),
-								ui.TextField("body", "Message", bodyValue, bodyErr),
-								submitButton("Add message"),
-							),
-						),
+						card(formCard...),
 						messagesList(msgs),
 					),
 

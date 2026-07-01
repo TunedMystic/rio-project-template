@@ -99,6 +99,12 @@ presets render correctly without per-theme code.
 In dev (`make run`), visit `/pages` for an index of every page in the template,
 and `/dev/emails` to preview the email templates. Both are dev-only.
 
+Public forms are protected from bots with a no-JavaScript honeypot and a per-IP
+rate limit (single-instance, in-memory). To protect a new public form: add
+`views.Honeypot()` inside the `<form>`, call `honeypotTripped(r)` at the top of
+the POST handler and drop silently if true, and gate submissions with an injected
+`auth.Limiter` via `limiter.Allow(clientIP(r, Conf.TrustProxy))`.
+
 ## Build & deploy
 
 - `make tailwind` builds CSS (Tailwind v4; scans vendored rio/ui).

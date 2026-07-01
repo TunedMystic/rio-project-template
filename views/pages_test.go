@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"app/config"
+	"app/database"
 )
 
 func TestHome_RendersLandingSections(t *testing.T) {
@@ -53,5 +54,21 @@ func TestPages_RendersGroupsAndLinks(t *testing.T) {
 		if !strings.Contains(html, want) {
 			t.Errorf("Pages output missing %q", want)
 		}
+	}
+}
+
+func TestMessages_RendersHoneypotAndNotice(t *testing.T) {
+	var msgs []database.Message
+	withNotice := render(Messages(testPageData(), config.Meta{Title: "Messages"}, msgs, "", "", "Too many submissions, please try again shortly."))
+	if !strings.Contains(withNotice, `name="website"`) {
+		t.Error("Messages missing honeypot field")
+	}
+	if !strings.Contains(withNotice, "Too many submissions") {
+		t.Error("Messages missing notice text when notice is set")
+	}
+
+	noNotice := render(Messages(testPageData(), config.Meta{Title: "Messages"}, msgs, "", "", ""))
+	if strings.Contains(noNotice, "Too many submissions") {
+		t.Error("Messages should not render a notice when it is empty")
 	}
 }

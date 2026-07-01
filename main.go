@@ -71,6 +71,7 @@ func run() error {
 	store := database.NewStore(db)
 	sender := email.New(Conf.PostmarkToken, Conf.EmailFrom)
 	loginLimiter := auth.NewLimiter(5, 15*time.Minute)
+	publicFormLimiter := auth.NewLimiter(5, 10*time.Minute)
 
 	s := rio.NewServer(
 		RequestID,
@@ -81,7 +82,7 @@ func run() error {
 	s.Use(auth.LoadUser(store)) // server-wide: populate the current user
 
 	s.Handle("/", HandleHome())
-	s.Handle("/messages", HandleMessages(store))
+	s.Handle("/messages", HandleMessages(store, publicFormLimiter))
 	s.Handle("/about", HandleAbout())
 	s.Handle("/kit", HandleKit())
 	s.Handle("/privacy-policy", HandlePrivacyPolicy())
