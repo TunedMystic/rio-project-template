@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -109,6 +110,17 @@ func run() error {
 	s.Handle("/account/billing", auth.RequireUser(HandleBilling(store)))
 	s.Handle("/account/delete", auth.RequireUser(HandleDeleteAccount(store)))
 	s.Handle("/account/google/disconnect", auth.RequireUser(HandleDisconnectGoogle(store)))
+
+	// Admin (env-gated by ADMIN_EMAILS; non-admins get 404).
+	admin := func(h http.Handler) http.Handler {
+		return auth.RequireUser(auth.RequireAdmin(Conf.AdminEmails)(h))
+	}
+	s.Handle("/admin", admin(HandleAdminIndex()))
+	s.Handle("/admin/users", admin(HandleAdminUsers(store)))
+	s.Handle("GET /admin/users/{id}", admin(HandleAdminUserDetail(store)))
+	s.Handle("POST /admin/users/{id}/entitlements/grant", admin(HandleAdminGrantEntitlement(store)))
+	s.Handle("POST /admin/users/{id}/entitlements/revoke", admin(HandleAdminRevokeEntitlement(store)))
+	s.Handle("POST /admin/users/{id}/sessions/revoke", admin(HandleAdminRevokeSessions(store)))
 
 	// Billing (optional: only when Stripe is configured)
 	if Conf.StripeEnabled() {

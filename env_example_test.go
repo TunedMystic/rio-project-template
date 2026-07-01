@@ -18,6 +18,7 @@ func TestEnvExample_ListsAllKeys(t *testing.T) {
 		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
 		"STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_PRO", "STRIPE_PRICE_EBOOK",
 		"SESSION_CLEANUP_INTERVAL", "TOKEN_CLEANUP_INTERVAL", "ERROR_WEBHOOK_URL",
+		"ADMIN_EMAILS",
 	}
 	for _, k := range keys {
 		if !strings.Contains(content, k) {

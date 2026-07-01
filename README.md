@@ -34,6 +34,7 @@ Email magic-link login + a tabbed account area (`/account`). Config via env:
 | `SESSION_CLEANUP_INTERVAL` | Interval to prune expired sessions (`0` disables) | `1h` |
 | `TOKEN_CLEANUP_INTERVAL` | Interval to prune expired login tokens (`0` disables) | `1h` |
 | `ERROR_WEBHOOK_URL` | POST JSON error events here (Sentry/Slack/any); unset disables | unset |
+| `ADMIN_EMAILS` | Comma-separated admin emails for `/admin` (empty disables) | unset |
 
 In dev with no `POSTMARK_TOKEN`, the magic link is printed to the server log —
 click it from your terminal. In production, set all four (`APP_SECRET` is
@@ -63,6 +64,14 @@ Edit the `Products` catalog in `config/config.go` to add/rename products (each i
 **Local webhooks:** run `stripe listen --forward-to localhost:3000/webhooks/stripe`
 and put the printed `whsec_...` in `STRIPE_WEBHOOK_SECRET`. Use Stripe **test mode**
 keys/prices; the live consent round-trip can't be automated.
+
+## Admin
+
+An auth-gated back-office at `/admin` (redirects to `/admin/users`). Set
+`ADMIN_EMAILS` to a comma-separated allowlist; those users get a searchable,
+paginated user list and a per-user detail page where you can grant/revoke an
+entitlement (comp an account) and revoke a user's sessions. Non-admins receive a
+404 (the surface is not advertised); leaving `ADMIN_EMAILS` empty disables it.
 
 ## Theming
 
