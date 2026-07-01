@@ -7,9 +7,10 @@ APP="$$(basename -- $$(PWD))"
 # -------------------------------------------------------------------
 
 ## @(app) - 🤖 Run the Go app       (dev)
+# Loads .env (if present) so native dev shares the same config as docker-compose.
 run: bin/watchexec bin/cwebp
 	@echo "✨🤖✨ Running the app server\n"
-	@./bin/watchexec -r -e go,css,js,html,md,json "go run -ldflags=\"-X 'main.BuildEnv=debug'\" ./..."
+	@set -a; [ -f .env ] && . ./.env; set +a; ./bin/watchexec -r -e go,css,js,html,md,json "go run -ldflags=\"-X 'main.BuildEnv=debug'\" ./..."
 
 
 ## @(app) - 📦 Build the app binary
