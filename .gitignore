@@ -1,5 +1,8 @@
 # Binaries
 bin/
+# Stray root build output (the build target writes to bin/app; a bare
+# `go build .` would otherwise drop an `app` binary here).
+/app
 
 # Database
 *.db
