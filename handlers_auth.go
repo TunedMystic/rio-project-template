@@ -64,11 +64,8 @@ func HandleLogin(store *database.Store, sender email.Sender, limiter *auth.Limit
 					if next != "/account" {
 						link += "&next=" + url.QueryEscape(next)
 					}
-					msg := email.Message{
-						To:      emailAddr,
-						Subject: "Your login link",
-						Text:    "Click to log in (expires in 15 minutes):\n\n" + link,
-					}
+					subject, html, text := views.LoginEmail(emailContext(), link)
+					msg := email.Message{To: emailAddr, Subject: subject, HTML: html, Text: text}
 					if err := sender.Send(r.Context(), msg); err != nil {
 						rio.LogError(err)
 					}

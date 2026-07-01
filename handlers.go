@@ -21,6 +21,11 @@ func render(w http.ResponseWriter, status int, node dom.Node) error {
 	return node.Render(w)
 }
 
+// emailContext builds the branding passed to email templates.
+func emailContext() views.EmailContext {
+	return views.EmailContext{SiteName: Conf.SiteName, Tokens: Conf.Tokens}
+}
+
 func HandleHome() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		// Treat any unknown path under "/" as 404.

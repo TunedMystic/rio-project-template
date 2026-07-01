@@ -52,6 +52,9 @@ func TestHandleLogin_POST_IssuesAndSends(t *testing.T) {
 	if !strings.Contains(sender.lastMsg.Text, "/auth/verify?token=") {
 		t.Errorf("sent message missing verify link: %q", sender.lastMsg.Text)
 	}
+	if !strings.Contains(sender.lastMsg.HTML, "/auth/verify?token=") {
+		t.Errorf("sent message HTML missing verify link: %q", sender.lastMsg.HTML)
+	}
 }
 
 func TestHandleVerify_CreatesUserAndSession(t *testing.T) {
