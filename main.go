@@ -132,6 +132,12 @@ func run() error {
 		s.Handle("/guide", auth.RequireUser(auth.RequireEntitlement(store, "ebook")(HandleGuide())))
 	}
 
+	// Email previews (dev only): visit /dev/emails to iterate on email branding.
+	if Conf.Debug {
+		s.Handle("/dev/emails", HandleDevEmails())
+		s.Handle("GET /dev/emails/{name}", HandleDevEmailPreview())
+	}
+
 	s.Handle("/static/", HandleStatic())
 
 	// Cancel the context on Ctrl-C or SIGTERM (e.g. `docker stop`) so the
