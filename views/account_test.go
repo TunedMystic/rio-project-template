@@ -130,6 +130,23 @@ func TestSecurity_ShowsLoginMethods(t *testing.T) {
 	}
 }
 
+func TestAccountShell_RendersBreadcrumbs(t *testing.T) {
+	pd := testPageData()
+	av := AccountView{Active: "security", CSRF: "c"}
+	var b bytes.Buffer
+	_ = Security(pd, config.Meta{Title: "Security"}, av, nil, "", false).Render(&b)
+	html := b.String()
+	if !strings.Contains(html, `aria-label="Breadcrumb"`) {
+		t.Error("account page missing breadcrumbs")
+	}
+	if !strings.Contains(html, "Home") {
+		t.Error("account breadcrumb missing Home crumb")
+	}
+	if !strings.Contains(html, `aria-current="page"`) {
+		t.Error("account breadcrumb missing current page marker")
+	}
+}
+
 func TestBilling_NotConfigured(t *testing.T) {
 	pd := testPageData()
 	av := AccountView{Active: "billing", CSRF: "c"}

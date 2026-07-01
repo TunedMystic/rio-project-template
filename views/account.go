@@ -40,7 +40,22 @@ func accountShell(pd config.PageData, meta config.Meta, av AccountView, body ...
 		tabs = append(tabs, dom.A(dom.Class(cls), dom.Href(tb.href), dom.Text(tb.label)))
 	}
 
-	content := make([]dom.Node, 0, len(body)+2)
+	// Active-tab crumb label for the breadcrumb trail.
+	crumbLabel, crumbHref := "Account", "/account"
+	for _, tb := range accountTabs {
+		if tb.key == av.Active {
+			crumbLabel, crumbHref = tb.label, tb.href
+			break
+		}
+	}
+	trail := []config.Link{
+		{Text: "Home", Href: "/"},
+		{Text: "Account", Href: "/account"},
+		{Text: crumbLabel, Href: crumbHref},
+	}
+
+	content := make([]dom.Node, 0, len(body)+4)
+	content = append(content, breadcrumbs(trail))
 	if av.Flash != "" {
 		content = append(content, ui.Alert(ui.AlertSuccess, dom.Text(av.Flash)))
 	}
