@@ -14,10 +14,10 @@ func TestDBPath_DerivesFromProjectName(t *testing.T) {
 	}
 }
 
-func TestDBPath_DevDefaultsToCurrentDir(t *testing.T) {
+func TestDBPath_DevDefaultsToDataDir(t *testing.T) {
 	t.Setenv("DB_DIR", "") // unset -> dev default when debug
 	got := DBPath("RioProg", true)
-	want := filepath.Join(".", "RioProg.db")
+	want := filepath.Join("data", "RioProg.db")
 	if got != want {
 		t.Errorf("DBPath = %q, want %q", got, want)
 	}

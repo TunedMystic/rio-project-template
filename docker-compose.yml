@@ -1,19 +1,26 @@
-# Example local deployment: the app with a persistent /data volume for its
-# SQLite database. Backups are handled out-of-band in production (see
-# docs/deploy/litestream.md), not by this compose file.
+# Example local deployment: the app with its SQLite database bind-mounted to
+# ./data — the same directory the dev server (`make run`) uses — so there is one
+# canonical location for the database and no ambiguity between runs.
+#
+# Shared config lives in .env (copy it from .env.example). It is loaded here via
+# env_file AND sourced by `make run`, so native and container runs share one
+# source of truth. DB_DIR is pinned to the container path below (it differs from
+# native dev, so it is intentionally NOT taken from .env), and APP_SECRET has a
+# safe fallback so `docker compose up` still works before you create .env.
+# Backups are handled out-of-band in production (see docs/deploy/litestream.md).
 services:
   app:
     build:
       context: .
       args:
         BUILD_HASH: dev
+    env_file:
+      - path: .env
+        required: false
     environment:
-      APP_SECRET: change-me-in-prod
       DB_DIR: /data
+      APP_SECRET: ${APP_SECRET:-change-me-in-prod}
     volumes:
-      - data:/data
+      - ./data:/data
     ports:
       - "3000:3000"
-
-volumes:
-  data:

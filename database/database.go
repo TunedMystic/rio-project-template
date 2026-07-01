@@ -2,12 +2,21 @@ package database
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 
 	_ "modernc.org/sqlite" // pure-Go SQLite driver; registers "sqlite"
 )
 
 // Open opens a SQLite database at path with sane pragmas for a web app.
 func Open(path string) (*sql.DB, error) {
+	// Ensure the parent directory exists (e.g. dev's ./data on a fresh clone);
+	// SQLite creates the file but not missing directories.
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
+	}
 	db, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, err
