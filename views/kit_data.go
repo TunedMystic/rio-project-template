@@ -225,6 +225,115 @@ func usageMeter(label string, used, limit int) dom.Node {
 	)
 }
 
+// pageWindow returns the page numbers to render: always page 1, the last page,
+// and a window of current ±1. A 0 entry marks an ellipsis gap between numbers.
+func pageWindow(current, total int) []int {
+	if total < 1 {
+		total = 1
+	}
+	if current < 1 {
+		current = 1
+	}
+	if current > total {
+		current = total
+	}
+	show := map[int]bool{1: true, total: true, current: true}
+	if current-1 >= 1 {
+		show[current-1] = true
+	}
+	if current+1 <= total {
+		show[current+1] = true
+	}
+	out := make([]int, 0, total)
+	prev := 0
+	for p := 1; p <= total; p++ {
+		if !show[p] {
+			continue
+		}
+		if prev != 0 && p-prev > 1 {
+			out = append(out, 0) // ellipsis gap
+		}
+		out = append(out, p)
+		prev = p
+	}
+	return out
+}
+
+// pagination renders a numbered pager with Prev/Next controls. The current page
+// is a filled primary chip; other pages link to baseHref?page=N. Prev/Next
+// disable at the ends. A 0 from pageWindow renders as an ellipsis.
+func pagination(current, total int, baseHref string) dom.Node {
+	if total < 1 {
+		total = 1
+	}
+	if current < 1 {
+		current = 1
+	}
+	if current > total {
+		current = total
+	}
+
+	kids := []dom.Node{
+		dom.Class("flex items-center gap-1"),
+		dom.Aria("label", "Pagination"),
+	}
+
+	if current > 1 {
+		kids = append(kids, pageLink(fmt.Sprintf("%s?page=%d", baseHref, current-1), "Prev", false))
+	} else {
+		kids = append(kids, pageDisabled("Prev"))
+	}
+
+	for _, p := range pageWindow(current, total) {
+		if p == 0 {
+			kids = append(kids, dom.Span(
+				dom.Class("px-2 text-[var(--color-text-muted)]"),
+				dom.Text("…"),
+			))
+			continue
+		}
+		kids = append(kids, pageLink(
+			fmt.Sprintf("%s?page=%d", baseHref, p),
+			fmt.Sprintf("%d", p),
+			p == current,
+		))
+	}
+
+	if current < total {
+		kids = append(kids, pageLink(fmt.Sprintf("%s?page=%d", baseHref, current+1), "Next", false))
+	} else {
+		kids = append(kids, pageDisabled("Next"))
+	}
+
+	return dom.Nav(kids...)
+}
+
+// pageLink renders one pager control. When current, it renders a filled primary
+// chip marked aria-current instead of a link.
+func pageLink(href, label string, current bool) dom.Node {
+	if current {
+		return dom.Span(
+			dom.Class("inline-flex h-8 min-w-8 items-center justify-center rounded-[var(--radius-base)] bg-[var(--color-primary)] px-2 text-[length:var(--font-size-sm)] font-semibold text-[var(--color-on-primary)] [font-variant-numeric:tabular-nums]"),
+			dom.Aria("current", "page"),
+			dom.Text(label),
+		)
+	}
+	return dom.A(
+		dom.Class("inline-flex h-8 min-w-8 items-center justify-center rounded-[var(--radius-base)] px-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] [font-variant-numeric:tabular-nums] transition-colors hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"),
+		dom.Href(href),
+		dom.Text(label),
+	)
+}
+
+// pageDisabled renders a muted, non-interactive Prev/Next at the ends.
+func pageDisabled(label string) dom.Node {
+	return dom.Span(
+		dom.Class("inline-flex h-8 min-w-8 cursor-not-allowed items-center justify-center rounded-[var(--radius-base)] px-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-text-muted)] opacity-50 [font-variant-numeric:tabular-nums]"),
+		dom.Aria("disabled", "true"),
+		dom.Text(label),
+	)
+}
+
 // emptyState renders a centered empty state with an icon, copy, and optional CTA.
 func emptyState(iconName, title, body string, cta dom.Node) dom.Node {
 	children := []dom.Node{
