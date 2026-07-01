@@ -8,7 +8,8 @@ components + SQLite with built-in migrations, in a scratch Docker image.
 1. Clone this repo.
 2. In `config/config.go`, set `ProjectName` (this names the SQLite file:
    `<DB_DIR>/<ProjectName>.db`) and edit the `defaultTokens()` brand.
-3. `make run` — runs the app at http://localhost:3000 with hot reload.
+3. Copy `.env.example` to `.env` and fill in values as needed.
+4. `make run` — runs the app at http://localhost:3000 with hot reload.
 
 ## Database
 
@@ -30,6 +31,9 @@ Email magic-link login + a tabbed account area (`/account`). Config via env:
 | `GOOGLE_CLIENT_ID` | Google OAuth client id | unset → Google login hidden |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | unset → Google login hidden |
 | `TRUST_PROXY` | Honor X-Forwarded-For for client IP (set behind a trusted proxy) | unset → use the socket peer IP |
+| `SESSION_CLEANUP_INTERVAL` | Interval to prune expired sessions (`0` disables) | `1h` |
+| `TOKEN_CLEANUP_INTERVAL` | Interval to prune expired login tokens (`0` disables) | `1h` |
+| `ERROR_WEBHOOK_URL` | POST JSON error events here (Sentry/Slack/any); unset disables | unset |
 
 In dev with no `POSTMARK_TOKEN`, the magic link is printed to the server log —
 click it from your terminal. In production, set all four (`APP_SECRET` is
@@ -91,3 +95,14 @@ presets render correctly without per-theme code.
   `docker run -p 3000:3000 -v ./data:/data <image>`.
   Multiple products share one `/data` volume — each has its own
   `<ProjectName>.db`.
+
+## Backups
+
+Data lives in a single SQLite file. Use [Litestream](https://litestream.io) for
+continuous, offsite backups with point-in-time restore — see
+[docs/deploy/litestream.md](docs/deploy/litestream.md) plus the root
+`litestream.yml` and `docker-compose.yml` examples.
+
+Expired sessions and login tokens are pruned automatically by a background
+scheduler (intervals via `SESSION_CLEANUP_INTERVAL` / `TOKEN_CLEANUP_INTERVAL`;
+set `0` to disable).

@@ -16,6 +16,8 @@ import (
 	"app/config"
 	"app/database"
 	"app/email"
+	"app/report"
+	"app/scheduler"
 
 	"github.com/tunedmystic/rio"
 )
@@ -57,11 +59,24 @@ func run() error {
 		return fmt.Errorf("APP_SECRET must be set in production")
 	}
 
+	logger := rio.NewLogger(os.Stdout)
+	rio.Logger(logger) // rio.MakeHandler's LogError uses this logger
+
+	var reporter report.Reporter = report.Nop{}
+	if Conf.ErrorWebhookURL != "" {
+		reporter = report.NewWebhook(Conf.ErrorWebhookURL)
+	}
+
 	store := database.NewStore(db)
 	sender := email.New(Conf.PostmarkToken, Conf.EmailFrom)
 	loginLimiter := auth.NewLimiter(5, 15*time.Minute)
 
-	s := rio.NewServer()
+	s := rio.NewServer(
+		RequestID,
+		LogRequests(logger),
+		RecoverAndReport(logger, reporter),
+		rio.SecureHeaders,
+	)
 	s.Use(auth.LoadUser(store)) // server-wide: populate the current user
 
 	s.Handle("/", HandleHome())
@@ -111,6 +126,11 @@ func run() error {
 	// server drains in-flight requests before the deferred db.Close runs.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	sched := scheduler.New(logger, reporter)
+	sched.Add(scheduler.Job{Name: "sessions-cleanup", Interval: Conf.SessionCleanupInterval, Run: store.DeleteExpiredSessions})
+	sched.Add(scheduler.Job{Name: "tokens-cleanup", Interval: Conf.TokenCleanupInterval, Run: store.DeleteExpiredTokens})
+	sched.Start(ctx)
 
 	ln, err := net.Listen("tcp", Conf.Addr)
 	if err != nil {

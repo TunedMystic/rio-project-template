@@ -1,0 +1,13 @@
+# Example Litestream config. Replicates the app's SQLite database to S3-compatible
+# storage for continuous backup + point-in-time restore. Litestream runs as a
+# SEPARATE process/container (it cannot run inside the app's scratch image).
+#
+# Docs: https://litestream.io
+dbs:
+  - path: /data/riostarter.db   # match <DB_DIR>/<ProjectName>.db
+    replicas:
+      - type: s3
+        bucket: your-backup-bucket
+        path: riostarter
+        region: us-east-1
+        # Credentials via env: LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY
