@@ -99,6 +99,53 @@ func HandleTerms() http.Handler {
 	return rio.MakeHandler(fn)
 }
 
+// pageCatalog is the hand-maintained list of the template's pages for the
+// dev-only /pages index. Update it when adding a page.
+func pageCatalog() []views.PageGroup {
+	return []views.PageGroup{
+		{Title: "Public", Links: []views.PageLink{
+			{Label: "Home", Href: "/"},
+			{Label: "About", Href: "/about"},
+			{Label: "Messages", Href: "/messages", Note: "SQLite-backed demo"},
+			{Label: "Component Kit", Href: "/kit"},
+			{Label: "Privacy Policy", Href: "/privacy-policy"},
+			{Label: "Terms of Service", Href: "/terms"},
+			{Label: "Log in", Href: "/login"},
+		}},
+		{Title: "Account", Links: []views.PageLink{
+			{Label: "Account (Profile)", Href: "/account", Note: "requires login"},
+			{Label: "Security", Href: "/account/security", Note: "requires login"},
+			{Label: "Billing", Href: "/account/billing", Note: "requires login"},
+			{Label: "Delete account", Href: "/account/delete", Note: "requires login"},
+		}},
+		{Title: "Admin", Links: []views.PageLink{
+			{Label: "Admin (users)", Href: "/admin", Note: "requires ADMIN_EMAILS; non-admins get 404"},
+		}},
+		{Title: "Billing", Links: []views.PageLink{
+			{Label: "Premium", Href: "/premium", Note: "requires Stripe + active subscription"},
+			{Label: "Guide", Href: "/guide", Note: "requires Stripe + ebook entitlement"},
+		}},
+		{Title: "Reference", Links: []views.PageLink{
+			{Label: "Email previews", Href: "/dev/emails", Note: "dev only"},
+			{Label: "This page", Href: "/pages", Note: "dev only"},
+		}},
+		{Title: "Utility endpoints", Links: []views.PageLink{
+			{Label: "Version (JSON)", Href: "/version"},
+			{Label: "Health", Href: "/healthz"},
+			{Label: "robots.txt", Href: "/robots.txt"},
+		}},
+	}
+}
+
+// HandlePages renders the dev-only index of the template's pages.
+func HandlePages() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "Pages")
+		return render(w, http.StatusOK, views.Pages(Conf.PageDataFor(account(r)), meta, pageCatalog()))
+	}
+	return rio.MakeHandler(fn)
+}
+
 func HandleVersion() http.Handler {
 	version := struct {
 		BuildDate string
