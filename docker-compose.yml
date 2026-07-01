@@ -2,6 +2,10 @@
 # Litestream cannot run inside the scratch app image, so it runs as its own
 # container replicating the same SQLite file.
 services:
+  # Restore-on-boot: on a FRESH volume, restore the database BEFORE the app
+  # starts (the app runs migrations against an existing file):
+  #   litestream restore -config litestream.yml /data/riostarter.db
+  # Then bring up the app. On an existing volume, no restore is needed.
   app:
     build:
       context: .
