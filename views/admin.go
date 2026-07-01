@@ -43,37 +43,6 @@ func subStatusBadge(status string) dom.Node {
 	return ui.Badge(variant, label)
 }
 
-// adminSelect renders a compact dropdown sized to its content with the app's own
-// chevron. ui.Select forces w-full (stretching to the label width, stranding the
-// native arrow far right) and renders the inconsistent native select arrow, so
-// the admin forms use this instead.
-func adminSelect(name, label string, opts []ui.Option) dom.Node {
-	// Strip the native arrow (appearance-none as a class doesn't reliably apply
-	// to <select>) and paint our own chevron as a right-aligned background SVG —
-	// no overlay element to mis-position. pr-9 reserves room for it.
-	const selStyle = `appearance:none;-webkit-appearance:none;` +
-		`background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");` +
-		`background-repeat:no-repeat;background-position:right 0.7rem center;background-size:16px 16px`
-	sel := []dom.Node{
-		dom.Class("w-fit rounded-[var(--radius-base)] border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-3 pr-9 text-[var(--color-text)] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"),
-		dom.Style(selStyle),
-		dom.Id(name), dom.Name(name),
-	}
-	for _, o := range opts {
-		sel = append(sel, dom.Option(dom.Value(o.Value), dom.Text(o.Label)))
-	}
-	return dom.Div(
-		// items-start keeps the flex column from stretching the select to the
-		// (wider) label width.
-		dom.Class("flex flex-col items-start gap-1"),
-		dom.Label(
-			dom.Class("text-[length:var(--font-size-sm)] font-medium text-[var(--color-text)]"),
-			dom.For(name), dom.Text(label),
-		),
-		dom.Select(sel...),
-	)
-}
-
 // AdminUsers renders the searchable, paginated user list (the admin landing page).
 func AdminUsers(pd config.PageData, meta config.Meta, query string, users []database.User, page, numPages int) dom.Node {
 	search := dom.Form(
@@ -208,7 +177,7 @@ func AdminUserDetail(pd config.PageData, meta config.Meta, v AdminUserView) dom.
 	}
 	grant := adminActionForm(fmt.Sprintf("/admin/users/%d/entitlements/grant", u.ID), v.CSRF,
 		dom.Div(dom.Class("flex items-end gap-2"),
-			adminSelect("product_key", "Grant product", opts),
+			selectField("product_key", "Grant product", "", opts, true),
 			submitButton("Grant"),
 		),
 	)
