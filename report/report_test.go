@@ -5,10 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	os.Exit(m.Run())
+}
 
 func TestRequestIDContext_RoundTrips(t *testing.T) {
 	ctx := ContextWithRequestID(context.Background(), "abc123")
@@ -62,6 +69,10 @@ func TestCapture_NilErrorNoOp(t *testing.T) {
 	if called {
 		t.Error("Capture with nil error should not report")
 	}
+}
+
+func TestCapture_NilReporterNoOp(t *testing.T) {
+	Capture(context.Background(), nil, errors.New("x")) // must not panic
 }
 
 // reporterFunc adapts a func to the Reporter interface for tests.

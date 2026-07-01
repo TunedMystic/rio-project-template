@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -85,6 +86,7 @@ func (w Webhook) Report(_ context.Context, e Event) {
 		slog.Error("report: post event", slog.String("err", err.Error()))
 		return
 	}
+	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
 }
 
