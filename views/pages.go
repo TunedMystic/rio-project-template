@@ -119,6 +119,21 @@ func PrivacyPolicy(pd config.PageData, meta config.Meta) dom.Node {
 	)
 }
 
+func Terms(pd config.PageData, meta config.Meta) dom.Node {
+	return Page(pd, meta,
+		pageHeader("Terms of Service", "Replace this with your product's terms of service."),
+		dom.Section(
+			dom.Class("py-12"),
+			shell(
+				dom.Div(
+					dom.Class("max-w-2xl space-y-5"),
+					ui.Text(ui.TextDefault, "This placeholder describes the terms under which a product is offered. Swap it for your real terms before you ship."),
+				),
+			),
+		),
+	)
+}
+
 func NotFound(pd config.PageData, meta config.Meta) dom.Node {
 	return Page(pd, meta,
 		dom.Section(
