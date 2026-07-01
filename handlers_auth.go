@@ -47,6 +47,13 @@ func HandleLogin(store *database.Store, sender email.Sender, limiter *auth.Limit
 
 		next = auth.SafeNext(r.FormValue("next"))
 		emailAddr := strings.TrimSpace(r.FormValue("email"))
+
+		// Silently drop bot submissions caught by the honeypot.
+		if honeypotTripped(r) {
+			http.Redirect(w, r, "/login/sent?email="+url.QueryEscape(emailAddr), http.StatusSeeOther)
+			return nil
+		}
+
 		form := forms.New()
 		form.CleanString("email", emailAddr, forms.StrRequired(), forms.StrEmail())
 		if !form.IsValid() {

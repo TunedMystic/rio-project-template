@@ -99,6 +99,12 @@ presets render correctly without per-theme code.
 In dev (`make run`), visit `/pages` for an index of every page in the template,
 and `/dev/emails` to preview the email templates. Both are dev-only.
 
+Public forms are protected from bots with a no-JavaScript honeypot and a per-IP
+rate limit (single-instance, in-memory). To protect a new public form: add
+`views.Honeypot()` inside the `<form>`, call `honeypotTripped(r)` at the top of
+the POST handler and drop silently if true, and gate submissions with an injected
+`auth.Limiter` via `limiter.Allow(clientIP(r, Conf.TrustProxy))`.
+
 ## Build & deploy
 
 - `make tailwind` builds CSS (Tailwind v4; scans vendored rio/ui).
@@ -111,9 +117,9 @@ and `/dev/emails` to preview the email templates. Both are dev-only.
 ## Backups
 
 Data lives in a single SQLite file. Use [Litestream](https://litestream.io) for
-continuous, offsite backups with point-in-time restore — see
-[docs/deploy/litestream.md](docs/deploy/litestream.md) plus the root
-`litestream.yml` and `docker-compose.yml` examples.
+continuous, offsite backups with point-in-time restore. On the target Dokku
+droplet it runs as a host-level systemd daemon replicating every project's
+database to R2 — see [docs/deploy/litestream.md](docs/deploy/litestream.md).
 
 Expired sessions and login tokens are pruned automatically by a background
 scheduler (intervals via `SESSION_CLEANUP_INTERVAL` / `TOKEN_CLEANUP_INTERVAL`;

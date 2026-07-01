@@ -1,11 +1,7 @@
-# Example deployment: the app plus a Litestream sidecar sharing the /data volume.
-# Litestream cannot run inside the scratch app image, so it runs as its own
-# container replicating the same SQLite file.
+# Example local deployment: the app with a persistent /data volume for its
+# SQLite database. Backups are handled out-of-band in production (see
+# docs/deploy/litestream.md), not by this compose file.
 services:
-  # Restore-on-boot: on a FRESH volume, restore the database BEFORE the app
-  # starts (the app runs migrations against an existing file):
-  #   litestream restore -config litestream.yml /data/riostarter.db
-  # Then bring up the app. On an existing volume, no restore is needed.
   app:
     build:
       context: .
@@ -18,18 +14,6 @@ services:
       - data:/data
     ports:
       - "3000:3000"
-
-  litestream:
-    image: litestream/litestream:latest
-    depends_on:
-      - app
-    command: ["replicate"]
-    environment:
-      LITESTREAM_ACCESS_KEY_ID: your-access-key
-      LITESTREAM_SECRET_ACCESS_KEY: your-secret-key
-    volumes:
-      - data:/data
-      - ./litestream.yml:/etc/litestream.yml:ro
 
 volumes:
   data:

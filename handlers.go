@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"app/auth"
 	"app/database"
 	"app/views"
 
@@ -26,6 +27,12 @@ func emailContext() views.EmailContext {
 	return views.EmailContext{SiteName: Conf.SiteName, Tokens: Conf.Tokens}
 }
 
+// honeypotTripped reports whether the decoy honeypot field was filled, which
+// indicates an automated (bot) submission of a public form.
+func honeypotTripped(r *http.Request) bool {
+	return strings.TrimSpace(r.FormValue(views.HoneypotName)) != ""
+}
+
 func HandleHome() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		// Treat any unknown path under "/" as 404.
@@ -39,9 +46,27 @@ func HandleHome() http.Handler {
 	return rio.MakeHandler(fn)
 }
 
-func HandleMessages(store *database.Store) http.Handler {
+func HandleMessages(store *database.Store, limiter *auth.Limiter) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		if r.Method == http.MethodPost {
+			// Silently drop bot submissions caught by the honeypot.
+			if honeypotTripped(r) {
+				http.Redirect(w, r, "/messages", http.StatusSeeOther)
+				return nil
+			}
+
+			// Rate-limit this public form by client IP.
+			if !limiter.Allow(clientIP(r, Conf.TrustProxy)) {
+				msgs, err := store.ListMessages(r.Context())
+				if err != nil {
+					return err
+				}
+				meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
+				return render(w, http.StatusTooManyRequests,
+					views.Messages(Conf.PageDataFor(account(r)), meta, msgs, r.FormValue("body"), "",
+						"Too many submissions, please try again shortly."))
+			}
+
 			// Validate with rio/forms: required, and a sane max length.
 			body := strings.TrimSpace(r.FormValue("body"))
 			form := forms.New()
@@ -55,7 +80,7 @@ func HandleMessages(store *database.Store) http.Handler {
 				field := form.MustField("body")
 				meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
 				return render(w, http.StatusUnprocessableEntity,
-					views.Messages(Conf.PageDataFor(account(r)), meta, msgs, field.Value(), field.Err().Error()))
+					views.Messages(Conf.PageDataFor(account(r)), meta, msgs, field.Value(), field.Err().Error(), ""))
 			}
 
 			if err := store.CreateMessage(r.Context(), form.CleanedString("body")); err != nil {
@@ -70,7 +95,7 @@ func HandleMessages(store *database.Store) http.Handler {
 			return err
 		}
 		meta := Conf.NewMeta(r.URL.RequestURI(), "Messages")
-		return render(w, http.StatusOK, views.Messages(Conf.PageDataFor(account(r)), meta, msgs, "", ""))
+		return render(w, http.StatusOK, views.Messages(Conf.PageDataFor(account(r)), meta, msgs, "", "", ""))
 	}
 	return rio.MakeHandler(fn)
 }

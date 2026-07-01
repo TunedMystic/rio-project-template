@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"app/auth"
 	"app/database"
 )
 
@@ -52,7 +54,7 @@ func TestHandleMessages_GET(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/messages", nil)
 	rec := httptest.NewRecorder()
-	HandleMessages(store).ServeHTTP(rec, req)
+	HandleMessages(store, auth.NewLimiter(5, time.Minute)).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rec.Code)
@@ -68,7 +70,7 @@ func TestHandleMessages_POSTCreatesAndRedirects(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/messages", strings.NewReader("body=created-here"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	HandleMessages(store).ServeHTTP(rec, req)
+	HandleMessages(store, auth.NewLimiter(5, time.Minute)).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusSeeOther {
 		t.Fatalf("status = %d, want 303", rec.Code)
@@ -102,7 +104,7 @@ func TestHandleMessages_POSTBlankShowsError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/messages", strings.NewReader("body=+++"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	HandleMessages(store).ServeHTTP(rec, req)
+	HandleMessages(store, auth.NewLimiter(5, time.Minute)).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("status = %d, want 422", rec.Code)
@@ -113,5 +115,50 @@ func TestHandleMessages_POSTBlankShowsError(t *testing.T) {
 	msgs, _ := store.ListMessages(context.Background())
 	if len(msgs) != 0 {
 		t.Errorf("blank message should not persist, got %d", len(msgs))
+	}
+}
+
+func TestHandleMessages_HoneypotDropped(t *testing.T) {
+	store := newTestStore(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/messages", strings.NewReader("body=spam&website=filled"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	HandleMessages(store, auth.NewLimiter(5, time.Minute)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status=%d, want 303", rec.Code)
+	}
+	msgs, _ := store.ListMessages(context.Background())
+	if len(msgs) != 0 {
+		t.Errorf("honeypot submission should not persist, got %d", len(msgs))
+	}
+}
+
+func TestHandleMessages_RateLimited(t *testing.T) {
+	store := newTestStore(t)
+	h := HandleMessages(store, auth.NewLimiter(1, time.Minute)) // allow 1, block the 2nd
+
+	post := func(body string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/messages", strings.NewReader("body="+body))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+
+	if rec := post("first"); rec.Code != http.StatusSeeOther {
+		t.Fatalf("first status=%d, want 303", rec.Code)
+	}
+	rec := post("second")
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second status=%d, want 429", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "Too many submissions") {
+		t.Error("rate-limited response missing notice")
+	}
+	msgs, _ := store.ListMessages(context.Background())
+	if len(msgs) != 1 {
+		t.Errorf("only the first message should persist, got %d", len(msgs))
 	}
 }

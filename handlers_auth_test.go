@@ -57,6 +57,24 @@ func TestHandleLogin_POST_IssuesAndSends(t *testing.T) {
 	}
 }
 
+func TestHandleLogin_HoneypotDropped(t *testing.T) {
+	store := authTestStore(t)
+	sender := &fakeSender{}
+	h := HandleLogin(store, sender, auth.NewLimiter(5, time.Minute))
+
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("email=bot@example.com&website=filled"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status=%d, want 303", rec.Code)
+	}
+	if sender.lastMsg.Text != "" {
+		t.Errorf("honeypot submission should not send an email, got %q", sender.lastMsg.Text)
+	}
+}
+
 func TestHandleVerify_CreatesUserAndSession(t *testing.T) {
 	store := authTestStore(t)
 
