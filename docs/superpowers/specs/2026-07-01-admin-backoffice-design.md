@@ -14,10 +14,13 @@ it. Scope is deliberately MVP: **read + a few safe actions**, no destructive ops
 
 In scope:
 - Access control via an `ADMIN_EMAILS` allowlist + a `RequireAdmin` guard.
-- Overview metrics, a searchable/paginated user list, and a user detail page.
+- A searchable/paginated user list (the admin landing page) and a user detail page.
 - Safe mutations: grant/revoke an entitlement (comp), revoke a user's sessions.
 
 Out of scope (deferred; do NOT build here):
+- An overview/metrics/dashboard page (total users, active subs, signup trends).
+  Deliberately excluded — a metrics landing page doesn't match how this is
+  operated; the user list is the landing page.
 - Destructive ops: deleting users, cancelling Stripe subscriptions via API.
 - Editing arbitrary user fields, impersonation, audit-log persistence, RBAC/roles
   beyond the single admin allowlist, CSV export.
@@ -59,14 +62,8 @@ Out of scope (deferred; do NOT build here):
 func (s *Store) ListUsers(ctx context.Context, query string, limit, offset int) ([]User, error)
 
 // CountUsers returns the number of users matching query (empty = all).
+// Used for pagination totals.
 func (s *Store) CountUsers(ctx context.Context, query string) (int, error)
-
-// CountActiveSubscriptions returns users whose subscription_status is
-// 'active' or 'trialing'.
-func (s *Store) CountActiveSubscriptions(ctx context.Context) (int, error)
-
-// CountUsersSince returns the number of users created at or after t.
-func (s *Store) CountUsersSince(ctx context.Context, t time.Time) (int, error)
 
 // RevokeEntitlement removes a product entitlement from a user (no error if
 // absent). Counterpart to the existing GrantEntitlement.
@@ -86,10 +83,12 @@ All registered under `auth.RequireUser` → `auth.RequireAdmin(Conf.AdminEmails)
 Handlers use `rio.MakeHandler` like the rest of the app. Page size constant
 `adminPageSize = 25`.
 
-- `GET /admin` — `HandleAdminOverview(store)`: total users, active subscriptions,
-  users created in the last 30 days, plus the 10 most recent signups.
+- `GET /admin` — `HandleAdminIndex()`: redirects (303) to `/admin/users`. The
+  admin area has a single landing page — the user list — so `/admin` is just the
+  canonical entry point.
 - `GET /admin/users` — `HandleAdminUsers(store)`: reads `q` (search) and `page`
-  (1-based) from the query string; renders the paginated list.
+  (1-based) from the query string; renders the paginated list. This is the admin
+  landing page.
 - `GET /admin/users/{id}` — `HandleAdminUserDetail(store)`: loads the user,
   entitlements, and sessions. 404 if the id is unknown/non-numeric.
 - `POST /admin/users/{id}/entitlements/grant` — `HandleAdminGrantEntitlement(store)`:
@@ -110,15 +109,10 @@ detail handler renders that flash.
 
 ## Views (`views/admin.go`)
 
-- `adminShell(pd, meta, active, body...)` — page chrome: `pageHeader("Admin", …)`,
-  a breadcrumb trail (`Home › Admin › <section>`), and a small admin subnav
-  (Overview, Users). Mirrors `accountShell`'s structure.
-- `statCard(label, value string) dom.Node` — a plain KPI tile (label + big
-  tabular number) built on the existing surface-card classes. Deliberately NOT
-  `metricCard` (which requires a delta% and sparkline and would show a misleading
-  "▲0.0%").
-- `adminOverview(...)` — a 3-up grid of `statCard`s + a recent-signups table
-  (email, name, created).
+- `adminShell(pd, meta, body...)` — page chrome: `pageHeader("Admin", …)` and a
+  breadcrumb trail (`Home › Admin › <section>`). Mirrors `accountShell`'s
+  structure, minus a subnav (the admin area is just the user list + detail, so a
+  subnav would be noise).
 - `adminUsers(...)` — a search form (`GET`, field `q`), a users table (email,
   name, created, subscription `ui.Badge`) where each row links to
   `/admin/users/{id}`, and the reused `pagination(current, total, "/admin/users")`
@@ -151,15 +145,15 @@ detail views.
 - **config:** `ADMIN_EMAILS` parsing (`csvEnv`): unset → empty; spaces/case
   normalized; empties dropped.
 - **store:** `ListUsers` (search substring match, newest-first order, limit/offset
-  paging); `CountUsers` (with and without query); `CountActiveSubscriptions`;
-  `CountUsersSince`; `RevokeEntitlement` (grant→revoke round-trip; revoking an
-  absent entitlement is a no-op error-free). Use the existing DB test harness.
-- **handlers:** `/admin` and `/admin/users` render 200 for an admin and 404 for a
-  logged-in non-admin; unknown user id → 404; grant POST adds the entitlement and
-  redirects (303); revoke-sessions POST removes sessions and redirects.
-- **views:** render smoke tests — overview shows the three stat labels; a user row
-  links to `/admin/users/<id>`; the detail page renders the grant form and a
-  `csrfInput`.
+  paging); `CountUsers` (with and without query); `RevokeEntitlement` (grant→revoke
+  round-trip; revoking an absent entitlement is a no-op error-free). Use the
+  existing DB test harness.
+- **handlers:** `/admin/users` renders 200 for an admin and 404 for a logged-in
+  non-admin; `/admin` redirects (303) to `/admin/users`; unknown user id → 404;
+  grant POST adds the entitlement and redirects (303); revoke-sessions POST
+  removes sessions and redirects.
+- **views:** render smoke tests — a user row links to `/admin/users/<id>`; the
+  detail page renders the grant form and a `csrfInput`.
 
 ## Config / docs
 
@@ -173,5 +167,6 @@ detail views.
 - No roles/permissions beyond the single allowlist.
 - No persisted audit log (actions are logged to stdout only).
 - No destructive actions (delete user, cancel subscription).
-- No new generic components; `statCard` is the only new view primitive, and it is
-  intentionally minimal.
+- No overview/metrics/dashboard page — the user list is the landing page.
+- No new generic view primitives; the admin views compose existing helpers
+  (`card`, `ui.Badge`, `pagination`, `breadcrumbs`, `csrfInput`).
