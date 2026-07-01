@@ -1,0 +1,31 @@
+# Example deployment: the app plus a Litestream sidecar sharing the /data volume.
+# Litestream cannot run inside the scratch app image, so it runs as its own
+# container replicating the same SQLite file.
+services:
+  app:
+    build:
+      context: .
+      args:
+        BUILD_HASH: dev
+    environment:
+      APP_SECRET: change-me-in-prod
+      DB_DIR: /data
+    volumes:
+      - data:/data
+    ports:
+      - "3000:3000"
+
+  litestream:
+    image: litestream/litestream:latest
+    depends_on:
+      - app
+    command: ["replicate"]
+    environment:
+      LITESTREAM_ACCESS_KEY_ID: your-access-key
+      LITESTREAM_SECRET_ACCESS_KEY: your-secret-key
+    volumes:
+      - data:/data
+      - ./litestream.yml:/etc/litestream.yml:ro
+
+volumes:
+  data:
