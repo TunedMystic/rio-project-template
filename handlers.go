@@ -26,6 +26,12 @@ func emailContext() views.EmailContext {
 	return views.EmailContext{SiteName: Conf.SiteName, Tokens: Conf.Tokens}
 }
 
+// honeypotTripped reports whether the decoy honeypot field was filled, which
+// indicates an automated (bot) submission of a public form.
+func honeypotTripped(r *http.Request) bool {
+	return strings.TrimSpace(r.FormValue(views.HoneypotName)) != ""
+}
+
 func HandleHome() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) error {
 		// Treat any unknown path under "/" as 404.

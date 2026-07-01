@@ -84,6 +84,7 @@ func Login(pd config.PageData, meta config.Meta, email, errMsg, next string) dom
 			dom.Action("/login"),
 			dom.Class(map[bool]string{true: "", false: "mt-8"}[pd.GoogleEnabled]),
 			dom.Input(dom.Type("hidden"), dom.Name("next"), dom.Value(next)),
+			Honeypot(),
 			ui.TextField("email", "Email address", email, errMsg,
 				dom.Placeholder("you@example.com"),
 				dom.Autocomplete("email"),

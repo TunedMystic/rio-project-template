@@ -5,6 +5,28 @@ import (
 	"github.com/tunedmystic/rio/ui"
 )
 
+// HoneypotName is the decoy field name shared by the honeypot renderer and the
+// handler-side honeypotTripped check. A non-empty value on submit means a bot
+// filled a field that real users and screen readers never see.
+const HoneypotName = "website"
+
+// Honeypot renders an off-screen decoy input for spam protection. It is hidden
+// with an inline off-screen style (not display:none, so naive bots still fill
+// it; inline so no Tailwind build is needed) and marked aria-hidden with a
+// negative tabindex so humans and screen readers never interact with it.
+func Honeypot() dom.Node {
+	return dom.Div(
+		dom.Style("position:absolute;left:-9999px"),
+		dom.Aria("hidden", "true"),
+		dom.Input(
+			dom.Type("text"),
+			dom.Name(HoneypotName),
+			dom.Tabindex("-1"),
+			dom.Autocomplete("off"),
+		),
+	)
+}
+
 // selectField renders a labeled dropdown that uses the app's own chevron (a
 // right-aligned background SVG) instead of the inconsistent native <select>
 // arrow. The option whose value equals selected is pre-selected. When compact,
