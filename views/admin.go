@@ -177,7 +177,7 @@ func AdminUserDetail(pd config.PageData, meta config.Meta, v AdminUserView) dom.
 	}
 	grant := adminActionForm(fmt.Sprintf("/admin/users/%d/entitlements/grant", u.ID), v.CSRF,
 		dom.Div(dom.Class("flex items-end gap-2"),
-			ui.Select("product_key", "Grant product", opts, "", ""),
+			selectField("product_key", "Grant product", "", opts, true),
 			submitButton("Grant"),
 		),
 	)

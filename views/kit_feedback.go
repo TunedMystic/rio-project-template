@@ -17,10 +17,10 @@ func formShowcase() dom.Node {
 		dom.Class("flex max-w-lg flex-col gap-4"),
 		ui.TextField("full_name", "Full name", "Ada Lovelace", ""),
 		ui.TextField("email", "Email", "ada@example.com", "Enter a valid email address"),
-		ui.Select("plan", "Plan", []ui.Option{
+		selectField("plan", "Plan", "pro", []ui.Option{
 			{Value: "starter", Label: "Starter"},
 			{Value: "pro", Label: "Pro"},
-		}, "pro", ""),
+		}, false),
 		ui.Textarea("bio", "Bio", "Building things with Go.", ""),
 		toggle("notify", "Email notifications", true),
 		dom.Div(dom.Class("pt-2"), ui.Button(ui.ButtonPrimary, "Save")),
