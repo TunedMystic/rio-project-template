@@ -117,9 +117,9 @@ the POST handler and drop silently if true, and gate submissions with an injecte
 ## Backups
 
 Data lives in a single SQLite file. Use [Litestream](https://litestream.io) for
-continuous, offsite backups with point-in-time restore — see
-[docs/deploy/litestream.md](docs/deploy/litestream.md) plus the root
-`litestream.yml` and `docker-compose.yml` examples.
+continuous, offsite backups with point-in-time restore. On the target Dokku
+droplet it runs as a host-level systemd daemon replicating every project's
+database to R2 — see [docs/deploy/litestream.md](docs/deploy/litestream.md).
 
 Expired sessions and login tokens are pruned automatically by a background
 scheduler (intervals via `SESSION_CLEANUP_INTERVAL` / `TOKEN_CLEANUP_INTERVAL`;
