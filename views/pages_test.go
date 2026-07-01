@@ -27,3 +27,13 @@ func TestHome_RendersLandingSections(t *testing.T) {
 		}
 	}
 }
+
+func TestTerms_RendersHeading(t *testing.T) {
+	pd := testPageData()
+	var b bytes.Buffer
+	_ = Terms(pd, config.Meta{Title: "Terms"}).Render(&b)
+	html := b.String()
+	if !strings.Contains(html, "Terms of Service") {
+		t.Error("Terms output missing heading")
+	}
+}

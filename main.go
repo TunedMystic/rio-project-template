@@ -85,6 +85,7 @@ func run() error {
 	s.Handle("/about", HandleAbout())
 	s.Handle("/kit", HandleKit())
 	s.Handle("/privacy-policy", HandlePrivacyPolicy())
+	s.Handle("/terms", HandleTerms())
 	s.Handle("/version", HandleVersion())
 	s.Handle("/healthz", HandleHealth(db))
 	s.Handle("/robots.txt", HandleRobots())

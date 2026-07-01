@@ -86,6 +86,14 @@ func HandlePrivacyPolicy() http.Handler {
 	return rio.MakeHandler(fn)
 }
 
+func HandleTerms() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) error {
+		meta := Conf.NewMeta(r.URL.RequestURI(), "Terms of Service")
+		return render(w, http.StatusOK, views.Terms(Conf.PageDataFor(account(r)), meta))
+	}
+	return rio.MakeHandler(fn)
+}
+
 func HandleVersion() http.Handler {
 	version := struct {
 		BuildDate string

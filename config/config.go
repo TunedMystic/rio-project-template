@@ -119,6 +119,7 @@ func New(buildEnv, buildHash string) Config {
 			{Text: "About", Href: "/about"},
 			{Text: "Kit", Href: "/kit"},
 			{Text: "Privacy Policy", Href: "/privacy-policy"},
+			{Text: "Terms", Href: "/terms"},
 		},
 	}
 	c.Tokens = c.Theme.Tokens()
